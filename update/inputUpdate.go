@@ -16,12 +16,15 @@ func InputUpdate(m textinput.Model, msg tea.Msg) (textinput.Model, tea.Cmd) {
 
 func InputUpdateMsgSeries(m textinput.Model) []common.StreamTypeList {
 	resultList := search.GetSeries(m.Value())
+	return resultList
+}
 
+func InputUpdateMsgAnime(m textinput.Model) []common.AnimeTypeList {
+	resultList := search.GetAnime(m.Value())
 	return resultList
 }
 
 func InputUpdateMsgVods(m textinput.Model) []common.VodTypeList {
 	resultList := search.GetMovies(m.Value())
-
 	return resultList
 }

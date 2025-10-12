@@ -56,7 +56,7 @@ func GetSeries(text string) []common.StreamTypeList {
 
 	var result TheSeriesDBResponse
 	if err := json.Unmarshal(respBody, &result); err != nil {
-		log.Println("cannot marshall the json")
+		log.Println("cannot unmarshall the json")
 	}
 
 	var s common.StreamTypeList

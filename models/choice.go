@@ -8,6 +8,7 @@ import (
 	var choiceList = []Choices{
 		{choice: "movies"},
 		{choice: "series"},
+		{choice: "anime"},
 	}
 
 

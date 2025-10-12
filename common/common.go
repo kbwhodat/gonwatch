@@ -10,11 +10,13 @@ type StreamTypeList struct {
 
 type SeasonsTypeList struct {
     SeasonTitle       string
-    // SeasonID          int64
-    SeasonNumber    string
+    SeasonID          string
+    SeasonNumber      string
+    SeasonPlot        string
     EpisodeCount      int64
     SeasonReleaseDate string
     SeriesID  	      int64
+    Episodes  	      []string
 }
 
 type EpisodeTypeList struct {
@@ -25,16 +27,36 @@ type EpisodeTypeList struct {
     EpisodeTmdbID      int64
     EpisodeReleaseDate string
     SeasonNumber       int
-    Runtime            int
+    Country            string
+}
+
+type AnimeEpisodeTypeList struct {
+    EpisodeTitle       string
+    SeasonID           string
+    EpisodePlot        string
+    EpisodeId          string
+    EpisodeTmdbID      int64
+    EpisodeReleaseDate string
+    SeasonNumber       int
+    Country            string
+    EpisodeList  	   []string
+}
+
+type AnimeTypeList struct {
+	AnimeTitle       string
+    AnimeID          int64
+    AnimePlot        string
+    AnimeTmdbID      int64
+    AnimeReleaseDate string
+    AnimeCountry     string
 }
 
 type VodTypeList struct {
-    VodTitle       string
+	VodTitle       string
     VodID          int64
     VodType        string
     VodTmdbID      int64
     VodReleaseDate string
-
 }
 
 type LiveTypeList struct {

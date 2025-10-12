@@ -1,15 +1,16 @@
 package models
 
 import (
-	"gonwatch/view"
 	"gonwatch/search"
 	"gonwatch/update"
+	"gonwatch/view"
 	"gonwatch/watch"
+	"strconv"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/bubbles/list"
-	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/spinner"
+	"github.com/charmbracelet/bubbles/textinput"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -42,10 +43,11 @@ type ListItem interface {
 	Type() 	    string
 	SznNumber() int
 	SznID() 	int
+	EpList() 	[]string
+	EpString() 	string
 }
 
 func (m *Model) Init() tea.Cmd {
-	// init spinner
 	m.spinner = spinner.New()
 	m.spinner.Spinner = spinner.Dot
 	return m.spinner.Tick
@@ -55,9 +57,26 @@ type linkFetchedMsg struct {
 	found bool
 }
 
-func fetchEpisodeCmd(item ListItem) tea.Cmd {
+func fetchEpisodeCmd(item ListItem, m *Model) tea.Cmd {
 	return func() tea.Msg {
-		ok := len(watch.PlayTv("tv", item.TmdbID(), int64(item.SznNumber()), item.ID())) > 0
+
+		selectedItem, _ := m.List.SelectedItem().(ListItem)
+		// var episode int64
+		var ok bool
+		if selectedItem.Type() == "anime episodes" {
+			episode_number, _ := strconv.Atoi(selectedItem.EpString())
+			ok = len(watch.PlayTv("anime", item.TmdbID(), int64(item.SznNumber()), int64(episode_number), m.List.SelectedItem().FilterValue())) > 0
+		} else {
+			ok = len(watch.PlayTv("tv", item.TmdbID(), int64(item.SznNumber()), item.ID(), m.List.SelectedItem().FilterValue())) > 0
+		}
+
+		return linkFetchedMsg{found: ok}
+	}
+}
+func fetchMovieCmd(item ListItem) tea.Cmd {
+
+	return func() tea.Msg {
+		ok := len(watch.PlayMovie("movie", item.ID())) > 0
 		return linkFetchedMsg{found: ok}
 	}
 }
@@ -65,7 +84,6 @@ func fetchEpisodeCmd(item ListItem) tea.Cmd {
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
-	// --- Handle async fetch result
 	switch msg := msg.(type) {
 	case linkFetchedMsg:
 		m.loading = false
@@ -80,7 +98,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	// --- Handle keys
 	if keyMsg, ok := msg.(tea.KeyMsg); ok {
 		switch keyMsg.String() {
 		case "ctrl+u":
@@ -121,25 +138,40 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						episodeList := search.GetEpisodes(selectedItem.TmdbID(), selectedItem.SznNumber())
 						EpisodeModel(m, episodeList)
 
-					case "episode":
+					case "anime":
+						seasonList := search.GetAnimeSeasons(selectedItem.ID(), m.List.SelectedItem().FilterValue())
+						AnimeSeasonModel(m, seasonList)
+
+					case "anime seasons":
+						episodeList := search.GetAnimeEpisodeList(selectedItem.EpList(), m.List.SelectedItem().FilterValue())
+						AnimeEpisodesModel(m, episodeList)
+
+					case "anime episodes":
 						m.loading = true
-						m.loadingLabel = "Fetching link…"
+						m.loadingLabel = "Fetching content…"
 						m.Mode = "loading"
 						return m, tea.Batch(
-							m.spinner.Tick,             // start spinner
-							fetchEpisodeCmd(selectedItem), // run fetch async
+							m.spinner.Tick,
+							fetchEpisodeCmd(selectedItem, m),
+						)
+
+					case "episode":
+						m.loading = true
+						m.loadingLabel = "Fetching content…"
+						m.Mode = "loading"
+						return m, tea.Batch(
+							m.spinner.Tick,
+							fetchEpisodeCmd(selectedItem, m),
 						)
 
 					case "vods":
-						if len(watch.PlayMovie("movie", selectedItem.ID())) > 0 {
-							m.Altscreen = true
-							m.Mode = "fullscreen"
-							return m, tea.EnterAltScreen
-						} else {
-							m.Altscreen = true
-							m.Mode = "linknotfoundscreen"
-							return m, tea.EnterAltScreen
-						}
+						m.loading = true
+						m.loadingLabel = "Fetching content…"
+						m.Mode = "loading"
+						return m, tea.Batch(
+							m.spinner.Tick,
+							fetchMovieCmd(selectedItem),
+						)
 					}
 				}
 				return m, nil
@@ -147,12 +179,16 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			if m.Mode == "input" {
 				selectedItem := m.Choice.choice
-				if selectedItem == "movies" {
-					resultList := update.InputUpdateMsgVods(m.TextInput)
-					VodModel(m, resultList)
-				} else if selectedItem == "series" {
-					resultList := update.InputUpdateMsgSeries(m.TextInput)
-					SeriesModel(m, resultList)
+				switch selectedItem {
+					case "movies":
+						resultList := update.InputUpdateMsgVods(m.TextInput)
+						VodModel(m, resultList)
+					case "series":
+						resultList := update.InputUpdateMsgSeries(m.TextInput)
+						SeriesModel(m, resultList)
+					case "anime":
+						resultList := update.InputUpdateMsgAnime(m.TextInput)
+						AnimeModel(m, resultList)
 				}
 			}
 
@@ -183,13 +219,12 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		model, cmd := update.SelectUpdate(m.List, msg)
 		m.List = model
 		return m, cmd
-	}
 
-	// --- keep spinner animating in loading mode
-	if m.Mode == "loading" {
+	case "loading":
 		var c tea.Cmd
 		m.spinner, c = m.spinner.Update(msg)
 		return m, c
+
 	}
 
 	return m, cmd

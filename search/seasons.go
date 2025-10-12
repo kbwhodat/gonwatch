@@ -60,14 +60,16 @@ func GetSeasons(tmdbid int64) []common.SeasonsTypeList {
 
 	myList := []common.SeasonsTypeList{}
 	for _, item := range result.Seasons {
-		s.SeriesID          = tmdbid
-		s.EpisodeCount      = item.EpisodeCount
-		s.SeasonTitle       = item.SeasonTitle
-		s.SeasonReleaseDate = item.ReleaseDate
-		s.SeasonNumber      = strconv.Itoa(int(item.SeasonNumber))
-		// s.SeasonID          = tmdbid
+		if item.SeasonNumber != 0 {
+			s.SeriesID          = tmdbid
+			s.EpisodeCount      = item.EpisodeCount
+			s.SeasonTitle       = item.SeasonTitle
+			s.SeasonReleaseDate = item.ReleaseDate
+			s.SeasonNumber      = strconv.Itoa(int(item.SeasonNumber))
+			// s.SeasonID          = tmdbid
 
-		myList = append(myList, s)
+			myList = append(myList, s)
+		}
 	}
 
 	return myList

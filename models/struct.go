@@ -28,6 +28,12 @@ func (e BubbleTeaSeriesList) SznID() int {
 func (e BubbleTeaSeriesList) TmdbID() int64 {
     return e.StreamID
 }
+func (e BubbleTeaSeriesList) EpList() []string {
+    return []string{}
+}
+func (e BubbleTeaSeriesList) EpString() string {
+    return ""
+}
 
 func (i BubbleTeaSeriesList) Title() string {
     title := i.StreamTitle
@@ -62,6 +68,12 @@ func (e BubbleTeaSeasonList) SznID() int {
 func (e BubbleTeaSeasonList) TmdbID() int64 {
     return e.SeriesID
 }
+func (e BubbleTeaSeasonList) EpList() []string {
+    return []string{}
+}
+func (e BubbleTeaSeasonList) EpString() string {
+    return ""
+}
 
 func (i BubbleTeaSeasonList) Title() string       { return i.SeasonTitle }
 func (i BubbleTeaSeasonList) Description() string { return strconv.Itoa(int(i.EpisodeCount)) + " episodes"}
@@ -89,11 +101,116 @@ func (e BubbleTeaEpisodeList) SznID() int {
 func (e BubbleTeaEpisodeList) TmdbID() int64 {
     return e.EpisodeTmdbID
 }
+func (e BubbleTeaEpisodeList) EpList() []string {
+    return []string{}
+}
+func (e BubbleTeaEpisodeList) EpString() string {
+    return ""
+}
 
 func (i BubbleTeaEpisodeList) Title() string       { return i.EpisodeTitle + " (s" + strconv.Itoa(int(i.SeasonNumber)) + "e" + strconv.Itoa(int(i.EpisodeId)) + ")"}
 func (i BubbleTeaEpisodeList) Description() string { return i.EpisodePlot }
-func (i BubbleTeaEpisodeList) FilterValue() string { return i.EpisodeTitle + " (s" + strconv.Itoa(int(i.SeasonNumber)) + "e" + strconv.Itoa(int(i.EpisodeId)) + ")"}
+func (i BubbleTeaEpisodeList) FilterValue() string { return i.EpisodeTitle + " (s" + strconv.Itoa(int(i.SeasonNumber)) + "e" + strconv.Itoa(int(i.EpisodeId)) + ")" + " " + i.Country}
 
+// ANIME
+type BubbleTeaAnimeList struct {
+    common.AnimeTypeList
+}
+
+func (e BubbleTeaAnimeList) Type() string {
+    return "anime"
+}
+func (e BubbleTeaAnimeList) ID() int64 {
+    return e.AnimeID
+}
+func (e BubbleTeaAnimeList) SznNumber() int {
+    return 0
+}
+func (e BubbleTeaAnimeList) SznID() int {
+    return 0
+}
+func (e BubbleTeaAnimeList) TmdbID() int64 {
+    return e.AnimeID
+}
+func (e BubbleTeaAnimeList) EpList() []string {
+    return []string{}
+}
+func (e BubbleTeaAnimeList) EpString() string {
+    return ""
+}
+
+func (i BubbleTeaAnimeList) Title() string {
+    title := i.AnimeTitle
+    if i.AnimeReleaseDate != "" {
+    	title += " (" + i.AnimeReleaseDate[0:4] + ")"
+    }
+    return title
+}
+func (i BubbleTeaAnimeList) Description() string { return i.AnimePlot }
+func (i BubbleTeaAnimeList) FilterValue() string { return i.AnimeTitle }
+
+// SEASONS
+type BubbleTeaAnimeSeasonList struct {
+    common.SeasonsTypeList
+}
+
+func (e BubbleTeaAnimeSeasonList) Type() string {
+    return "anime seasons"
+}
+func (e BubbleTeaAnimeSeasonList) ID() int64 {
+    return 0
+}
+func (e BubbleTeaAnimeSeasonList) SznNumber() int {
+	season_number, _ := strconv.Atoi(e.SeasonNumber)
+	return season_number
+}
+func (e BubbleTeaAnimeSeasonList) SznID() int {
+	return 0
+}
+func (e BubbleTeaAnimeSeasonList) TmdbID() int64 {
+    return e.SeriesID
+}
+func (e BubbleTeaAnimeSeasonList) EpList() []string {
+    return e.Episodes
+}
+func (e BubbleTeaAnimeSeasonList) EpString() string {
+    return ""
+}
+
+func (i BubbleTeaAnimeSeasonList) Title()       string { return i.SeasonTitle }
+func (i BubbleTeaAnimeSeasonList) Description() string { return i.SeasonPlot}
+func (i BubbleTeaAnimeSeasonList) FilterValue() string { return i.SeasonID }
+
+// EPISODES
+type BubbleTeaAnimeEpisodesList struct {
+    common.AnimeEpisodeTypeList
+}
+
+func (e BubbleTeaAnimeEpisodesList) Type() string {
+    return "anime episodes"
+}
+func (e BubbleTeaAnimeEpisodesList) ID() int64 {
+    return 0
+}
+func (e BubbleTeaAnimeEpisodesList) SznNumber() int {
+	return 0
+}
+func (e BubbleTeaAnimeEpisodesList) SznID() int {
+	return 0
+}
+func (e BubbleTeaAnimeEpisodesList) TmdbID() int64 {
+    return 0
+}
+func (e BubbleTeaAnimeEpisodesList) EpList() []string {
+    return e.EpisodeList
+}
+func (e BubbleTeaAnimeEpisodesList) EpString() string {
+    return e.EpisodeId
+}
+
+func (i BubbleTeaAnimeEpisodesList) Title()       string { return "Episode: " + i.EpisodeId }
+func (i BubbleTeaAnimeEpisodesList) Description() string { return ""}
+func (i BubbleTeaAnimeEpisodesList) FilterValue() string { return i.SeasonID }
 
 // VODS
 type BubbleTeaVodsList struct {
@@ -114,6 +231,12 @@ func (e BubbleTeaVodsList) SznID() int {
 }
 func (e BubbleTeaVodsList) TmdbID() int64 {
     return e.VodTmdbID
+}
+func (e BubbleTeaVodsList) EpList() []string {
+    return []string{}
+}
+func (e BubbleTeaVodsList) EpString() string {
+    return ""
 }
 
 func (i BubbleTeaVodsList) Title() string {
