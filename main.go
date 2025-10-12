@@ -11,11 +11,16 @@ import (
 
 func main() {
 
-	f, err := tea.LogToFile("/tmp/gonwatch/debug.log", "debug")
-	if err != nil {
-		fmt.Println("fatal:", err)
-		os.Exit(1)
-		defer f.Close()
+	if len(os.Args) > 1 {
+		if os.Args[1] == "debug" {
+			file, _ := os.Create("/tmp/debug.log")
+			defer file.Close()
+			f, err := tea.LogToFile("/tmp/debug.log", "debug")
+			if err != nil {
+				fmt.Println("fatal:", err)
+				defer f.Close()
+			}
+		}
 	}
 
 	p := tea.NewProgram(models.ChoiceModel(), tea.WithAltScreen())
