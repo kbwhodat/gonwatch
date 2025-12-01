@@ -30,7 +30,7 @@ type EmbedUrlResponse []struct {
 func ListSportMatches(sport string) []common.SportsGenreTypeList {
 
 	url := "https://streami.su/api/matches/" + sport
-	log.Println(url)
+	// log.Println(url)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -93,8 +93,8 @@ func ListStreams(streams []string) []common.SportsGenreTypeList {
 	myList := []common.SportsGenreTypeList{}
 	for _, item := range streams {
 		key, value, _ := strings.Cut(item, ":")
-		log.Println("key:" + key)
-		log.Println("value:" + value)
+		// log.Println("key:" + key)
+		// log.Println("value:" + value)
 		s.SportsGenreID    = value
 		s.SportsGenreName  = key
 

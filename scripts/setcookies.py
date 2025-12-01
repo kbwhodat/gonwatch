@@ -73,7 +73,9 @@ async def main() -> str:
                                 m = m3u8.match(decoded_url)
                                 urls.append(m.group())
                                 m3u8_found.set()
-                            elif "mono.ts.m3u8" in url or "strmd.top" in url:
+                            elif "mono.ts.m3u8" in url:
+                                urls.append(url)
+                            elif "strmd.top" in url or "gg.poocloud.in" in url:
                                 urls.append(url)
                             else:
                                 urls.append(url)

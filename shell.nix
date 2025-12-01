@@ -2,7 +2,9 @@
 
 pkgs.mkShell {
   packages = with pkgs; [
+    # streamlink
     gcc
+    python313Packages.python
     python313Packages.langdetect
     python313Packages.requests
     python313Packages.websockets

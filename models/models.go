@@ -86,7 +86,6 @@ func fetchEpisodeCmd(item ListItem, m *Model) tea.Cmd {
 	}
 }
 func fetchStreamCmd(url string) tea.Cmd {
-	log.Println(url)
 
 	return func() tea.Msg {
 		ok := len(watch.PlayStream("stream", url)) > 0

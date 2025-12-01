@@ -31,7 +31,7 @@ func executePythonTask(content string, id int64, season_number int64, episode_nu
 	cmdArgs := []string{}
 
 	cmdArgs = []string{"scripts/setcookies.py", content, strconv.FormatInt(id, 10), strconv.Itoa(int(season_number)), strconv.Itoa(int(episode_number)), title, strconv.Itoa(anilist_id), strconv.Itoa(anime_episode), sports_url}
-	log.Println(cmdArgs)
+	// log.Println(cmdArgs)
 
 	cmd := exec.Command("python", cmdArgs...)
 
@@ -81,19 +81,10 @@ func openMpv(urls []string, subtitles []string) {
 		} else if strings.Contains(url, "lightningbolts.ru") {
 			cmdArgs = []string{"--cache",  "--cache-secs=10", "--demuxer-readahead-secs=5", "--demuxer-lavf-o=fflags=+genpts", "--no-audio-pitch-correction", "--video-sync=audio", "--stream-lavf-o=reconnect=1", "--stream-lavf-o=reconnect_streamed=1", "--stream-lavf-o=reconnect_delay_max=5", "--stream-lavf-o=reconnect_on_http_error=1", "--stream-lavf-o=reconnect_on_network_error=1", "--fullscreen", "--save-position-on-quit", "--slang=en,eng", "--http-header-fields=Referer: https://vidsrc.cc/", url}
 
-		} else if strings.Contains(url, "strmd.top") {
-			log.Println(url)
+		} else if strings.Contains(url, "strmd.top") || strings.Contains(url, "gg.poocloud.in"){
 			// Multiple flags needs to prevent the player (mpv) from disconnecting
-			cmdArgs = []string{"--retry-open", "999", "--retry-streams", "999", "--stream-segment-attempts", "10", "--stream-segment-timeout", "10", "--player-continuous-http",
-		 						"--http-no-ssl-verify", "--http-header", "Referer=https://embedsports.top/", url, "best", "-p", dir, "-a",
-								"--network-timeout=60 --stream-lavf-o=reconnect=1 --stream-lavf-o=reconnect_streamed=1 --stream-lavf-o=reconnect_delay_max=5"}
-
-		} else if strings.Contains(url, "gg.poocloud.in") {
-			log.Println(url)
-			// Multiple flags needs to prevent the player (mpv) from disconnecting
-			cmdArgs = []string{"--retry-open", "999", "--retry-streams", "999", "--stream-segment-attempts", "10", "--stream-segment-timeout", "10", "--player-continuous-http",
-		 						"--http-no-ssl-verify", "--http-header", "Referer=https://embedsports.top/", url, "best", "-p", dir, "-a",
-								"--network-timeout=60 --stream-lavf-o=reconnect=1 --stream-lavf-o=reconnect_streamed=1 --stream-lavf-o=reconnect_delay_max=5"}
+			cmdArgs = []string{"--retry-open", "5", "--retry-streams", "5", "--stream-segment-attempts", "5", "--stream-segment-timeout", "10", "--player-continuous-http",
+		 						"--http-no-ssl-verify", "--http-header", "Referer=https://embedsports.top/", url, "best", "-p", dir, "-a", "--network-timeout=60 --stream-lavf-o=reconnect=1,reconnect_streamed=1,reconnect_delay_max=5"}
 
 		} else if strings.Contains(url, "storm") {
 			cmdArgs = []string{"--cache",  "--cache-secs=10", "--demuxer-readahead-secs=5", "--demuxer-lavf-o=fflags=+genpts", "--no-audio-pitch-correction", "--video-sync=audio", "--stream-lavf-o=reconnect=1", "--stream-lavf-o=reconnect_streamed=1", "--stream-lavf-o=reconnect_delay_max=5", "--stream-lavf-o=reconnect_on_http_error=1", "--stream-lavf-o=reconnect_on_network_error=1", "--fullscreen", "--save-position-on-quit", "--slang=en,eng", "--http-header-fields=Referer: https://vidlink.pro/", url}
@@ -109,10 +100,10 @@ func openMpv(urls []string, subtitles []string) {
 		var newCmd *exec.Cmd
 		if strings.Contains(url, "strmd.top") || strings.Contains(url, "gg.poocloud.in") {
 			newCmd = exec.Command(streamlink, cmdArgs...)
-			log.Println(newCmd)
+			// log.Println(newCmd)
 		} else {
 			newCmd = exec.Command(dir, cmdArgs...)
-			log.Println(newCmd)
+			// log.Println(newCmd)
 		}
 		err := newCmd.Run()
 
