@@ -5,7 +5,11 @@ import (
 	"gonwatch/update"
 	"gonwatch/view"
 	"gonwatch/watch"
+	"log"
+	"slices"
 	"strconv"
+
+	// "log"
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/spinner"
@@ -18,6 +22,8 @@ var (
 	keywordStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("204")).Background(lipgloss.Color("235"))
 	helpStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
 )
+
+var sportGenres = []string{"basketball", "football", "american-football", "hockey", "baseball", "motor-sports", "fight", "tennis", "rugby", "golf", "billiards", "afl", "darts", "cricket", "other"}
 
 type Model struct {
 	TextInput 	   textinput.Model
@@ -45,6 +51,12 @@ type ListItem interface {
 	SznID() 	int
 	EpList() 	[]string
 	EpString() 	string
+	SportName() string
+	SportId() 	string
+}
+
+type SportsSources interface {
+	Sources() []string
 }
 
 func (m *Model) Init() tea.Cmd {
@@ -70,6 +82,15 @@ func fetchEpisodeCmd(item ListItem, m *Model) tea.Cmd {
 			ok = len(watch.PlayTv("tv", item.TmdbID(), int64(item.SznNumber()), item.ID(), m.List.SelectedItem().FilterValue())) > 0
 		}
 
+		return linkFetchedMsg{found: ok}
+	}
+}
+func fetchStreamCmd(url string) tea.Cmd {
+	log.Println(url)
+
+	return func() tea.Msg {
+		ok := len(watch.PlayStream("stream", url)) > 0
+		// ok := false
 		return linkFetchedMsg{found: ok}
 	}
 }
@@ -130,6 +151,37 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				selectedItem, ok := m.List.SelectedItem().(ListItem)
 				if ok {
 					switch selectedItem.Type() {
+
+					case "streams":
+						m.loading = true
+						m.loadingLabel = "Fetching content…"
+						m.Mode = "loading"
+						// log.Println(m.List.SelectedItem().FilterValue())
+						// log.Println(selectedItem.SportName()) //admin
+						url := search.GetStreamLink(selectedItem.SportName(), m.List.SelectedItem().FilterValue())
+						return m, tea.Batch(
+							m.spinner.Tick,
+							fetchStreamCmd(url),
+						)
+
+					case "sports":
+						if slices.Contains(sportGenres, m.List.SelectedItem().FilterValue()) {
+							matches := search.ListSportMatches(m.List.SelectedItem().FilterValue())
+							// log.Println(matches)
+							MatchesModel(m, matches)
+						} else {
+							sel := m.List.SelectedItem()
+							match, ok := sel.(SportsSources)
+					        if !ok {
+					            log.Printf("unexpected item type: %T\n", sel)
+					            break
+					        }
+
+							streamlist := search.ListStreams(match.Sources())
+							MatchesModel(m, streamlist)
+
+						}
+
 					case "series":
 						seasonList := search.GetSeasons(selectedItem.ID())
 						SeasonModel(m, seasonList)
@@ -198,12 +250,17 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			if m.Mode == "select" {
 				m.Choice = choiceList[m.Cursor]
-				InputModel(m)
+				if m.Choice.FilterValue() == "sports" {
+					genreList := search.ListSports()
+					SportsModel(m, genreList)
+
+				} else {
+					InputModel(m)
+				}
 			}
 		}
 	}
 
-	// --- Route updates depending on mode
 	switch m.Mode {
 	case "input":
 		model, cmd := update.InputUpdate(m.TextInput, msg)

@@ -44,6 +44,7 @@ async def main() -> str:
     parser.add_argument("title", nargs='?')
     parser.add_argument("anilist_id", nargs='?')
     parser.add_argument("anime_episode", nargs='?')
+    parser.add_argument("stream_url", nargs='?')
     args = parser.parse_args()
 
     async with webdriver.Chrome(options=chrome_options) as driver:
@@ -72,6 +73,8 @@ async def main() -> str:
                                 m = m3u8.match(decoded_url)
                                 urls.append(m.group())
                                 m3u8_found.set()
+                            elif "mono.ts.m3u8" in url or "strmd.top" in url:
+                                urls.append(url)
                             else:
                                 urls.append(url)
 
@@ -126,6 +129,20 @@ async def main() -> str:
         #     else:
         #         return json.dumps([])
         #
+        if args.content == "stream":
+            await driver.add_cdp_listener("Network.responseReceived", on_response)
+            await driver.get(args.stream_url, wait_load=True)
+            await driver.sleep(4)
+            await driver.remove_cdp_listener("Network.responseReceived", on_response)
+
+            result =  json.dumps({"urls": urls, "subtitles": subtitles})
+
+            if len(urls) != 0:
+                return result
+            else:
+                return result
+
+
         if args.content == "anime":
             url = requests.get(f'https://heavenscape.vercel.app/api/anime/search/{args.title}/sub/{args.episode}').json().get("direct")
             urls.append(url)

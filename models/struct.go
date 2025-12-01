@@ -34,6 +34,12 @@ func (e BubbleTeaSeriesList) EpList() []string {
 func (e BubbleTeaSeriesList) EpString() string {
     return ""
 }
+func (e BubbleTeaSeriesList) SportId() string {
+    return ""
+}
+func (e BubbleTeaSeriesList) SportName() string {
+    return ""
+}
 
 func (i BubbleTeaSeriesList) Title() string {
     title := i.StreamTitle
@@ -74,6 +80,12 @@ func (e BubbleTeaSeasonList) EpList() []string {
 func (e BubbleTeaSeasonList) EpString() string {
     return ""
 }
+func (e BubbleTeaSeasonList) SportId() string {
+    return ""
+}
+func (e BubbleTeaSeasonList) SportName() string {
+    return ""
+}
 
 func (i BubbleTeaSeasonList) Title() string       { return i.SeasonTitle }
 func (i BubbleTeaSeasonList) Description() string { return strconv.Itoa(int(i.EpisodeCount)) + " episodes"}
@@ -107,6 +119,12 @@ func (e BubbleTeaEpisodeList) EpList() []string {
 func (e BubbleTeaEpisodeList) EpString() string {
     return ""
 }
+func (e BubbleTeaEpisodeList) SportId() string {
+    return ""
+}
+func (e BubbleTeaEpisodeList) SportName() string {
+    return ""
+}
 
 func (i BubbleTeaEpisodeList) Title() string       { return i.EpisodeTitle + " (s" + strconv.Itoa(int(i.SeasonNumber)) + "e" + strconv.Itoa(int(i.EpisodeId)) + ")"}
 func (i BubbleTeaEpisodeList) Description() string { return i.EpisodePlot }
@@ -136,6 +154,12 @@ func (e BubbleTeaAnimeList) EpList() []string {
     return []string{}
 }
 func (e BubbleTeaAnimeList) EpString() string {
+    return ""
+}
+func (e BubbleTeaAnimeList) SportId() string {
+    return ""
+}
+func (e BubbleTeaAnimeList) SportName() string {
     return ""
 }
 
@@ -176,6 +200,12 @@ func (e BubbleTeaAnimeSeasonList) EpList() []string {
 func (e BubbleTeaAnimeSeasonList) EpString() string {
     return ""
 }
+func (e BubbleTeaAnimeSeasonList) SportId() string {
+    return ""
+}
+func (e BubbleTeaAnimeSeasonList) SportName() string {
+    return ""
+}
 
 func (i BubbleTeaAnimeSeasonList) Title()       string { return i.SeasonTitle }
 func (i BubbleTeaAnimeSeasonList) Description() string { return i.SeasonPlot}
@@ -206,6 +236,12 @@ func (e BubbleTeaAnimeEpisodesList) EpList() []string {
 }
 func (e BubbleTeaAnimeEpisodesList) EpString() string {
     return e.EpisodeId
+}
+func (e BubbleTeaAnimeEpisodesList) SportId() string {
+    return ""
+}
+func (e BubbleTeaAnimeEpisodesList) SportName() string {
+    return ""
 }
 
 func (i BubbleTeaAnimeEpisodesList) Title()       string { return "Episode: " + i.EpisodeId }
@@ -238,6 +274,12 @@ func (e BubbleTeaVodsList) EpList() []string {
 func (e BubbleTeaVodsList) EpString() string {
     return ""
 }
+func (e BubbleTeaVodsList) SportId() string {
+    return ""
+}
+func (e BubbleTeaVodsList) SportName() string {
+    return ""
+}
 
 func (i BubbleTeaVodsList) Title() string {
     title := i.VodTitle
@@ -248,6 +290,56 @@ func (i BubbleTeaVodsList) Title() string {
 }
 func (i BubbleTeaVodsList) Description() string { return i.VodType }
 func (i BubbleTeaVodsList) FilterValue() string { return i.VodTitle }
+
+// SPORTS
+type BubbleTeaSportsList struct {
+    common.SportsGenreTypeList
+}
+func (e BubbleTeaSportsList) Type() string {
+    //return "sports"
+    return e.SportsType
+}
+func (e BubbleTeaSportsList) ID() int64 {
+    return 0
+}
+func (e BubbleTeaSportsList) SznNumber() int {
+    return 0
+}
+func (e BubbleTeaSportsList) SznID() int {
+    return 0
+}
+func (e BubbleTeaSportsList) TmdbID() int64 {
+    return 0
+}
+func (e BubbleTeaSportsList) EpList() []string {
+    return []string{}
+}
+func (e BubbleTeaSportsList) EpString() string {
+    return ""
+}
+func (e BubbleTeaSportsList) SportId() string {
+    return e.SportsGenreID
+}
+func (e BubbleTeaSportsList) SportName() string {
+    return e.SportsGenreName
+}
+func (e BubbleTeaSportsList) Sources() []string {
+	listing := e.SportSources
+	out := make([]string, 0, len(listing))
+
+	for _, v := range listing {
+		out = append(out, v.SportsSourceName+":"+v.SportsSourceId)
+	}
+
+	return out
+}
+
+func (i BubbleTeaSportsList) Title() string {
+    return i.SportName()
+}
+
+func (i BubbleTeaSportsList) Description() string { return "" }
+func (i BubbleTeaSportsList) FilterValue() string { return i.SportId() }
 
 
 // LIVE
@@ -266,6 +358,12 @@ func (e BubbleTeaLiveList) SznNumber() int {
 }
 func (e BubbleTeaLiveList) SznID() int {
     return 0
+}
+func (e BubbleTeaLiveList) SportId() string {
+    return ""
+}
+func (e BubbleTeaLiveList) SportName() string {
+    return ""
 }
 func (e BubbleTeaLiveList) TmdbID() sql.NullInt64 {
     return sql.NullInt64{

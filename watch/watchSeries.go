@@ -15,7 +15,7 @@ func PlayTv(content string, id int64, season_number int64, episode_number int64,
 
 	// return []string{}
 
-	urls, subtitles := executePythonTask(content, id, season_number, episode_number, title, anilist_id, anime_episode)
+	urls, subtitles := executePythonTask(content, id, season_number, episode_number, title, anilist_id, anime_episode, "")
 	// urls, subtitles := executePythonTask(content, id, season_number, episode_number, title, anilist_id, anime_episode)
 
 	go func() {

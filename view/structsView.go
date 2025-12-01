@@ -8,4 +8,5 @@ var ChoiceList = []Choices{
 	{choice: "movies"},
 	{choice: "series"},
 	{choice: "anime"},
+	{choice: "sports"},
 }

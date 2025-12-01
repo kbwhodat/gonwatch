@@ -9,6 +9,7 @@ import (
 		{choice: "movies"},
 		{choice: "series"},
 		{choice: "anime"},
+		{choice: "sports"},
 	}
 
 

@@ -51,6 +51,16 @@ type AnimeTypeList struct {
     AnimeCountry     string
 }
 
+type SportsGenreTypeList struct {
+	SportsGenreName       string
+    SportsGenreID         string
+    SportsType            string
+    SportSources []struct {
+	    SportsSourceName  string
+	    SportsSourceId    string
+    }
+}
+
 type VodTypeList struct {
 	VodTitle       string
     VodID          int64
