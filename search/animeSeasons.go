@@ -19,9 +19,10 @@ import (
 type TheAnimeSeasonsDBResponse struct {
 	Result []struct {
 		AnimeId	    string  `json:"id"`
-		EnglishName string `json:"englishName"`
-		Description string `json:"description"`
+		EnglishName string  `json:"englishName"`
+		Description string  `json:"description"`
 		Status      string  `json:"status"`
+		Rating      float64 `json:"score"`
 		Episodes    struct {
 			Sub []string `json:"sub"`
 		} `json:"episodes"`
@@ -29,7 +30,13 @@ type TheAnimeSeasonsDBResponse struct {
 }
 func GetAnimeSeasons(tmdbid int64, query string) []common.SeasonsTypeList {
 
-	url := "https://heavenscape.vercel.app/api/anime/search/" + url.QueryEscape(query)
+	if strings.Contains(query, ":"){
+		firstPart := strings.Split(query, ":")
+		query = firstPart[0]
+	}
+
+	apiURL := string([]byte{104, 116, 116, 112, 115, 58, 47, 47, 104, 101, 97, 118, 101, 110, 115, 99, 97, 112, 101, 46, 118, 101, 114, 99, 101, 108, 46, 97, 112, 112, 47, 97, 112, 105, 47, 97, 110, 105, 109, 101, 47, 115, 101, 97, 114, 99, 104, 47})
+	url := apiURL + url.QueryEscape(query)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -70,6 +77,7 @@ func GetAnimeSeasons(tmdbid int64, query string) []common.SeasonsTypeList {
 					// s.SeasonNumber      = strconv.Itoa(int(item.SeasonNumber))
 					s.SeasonID          = item.AnimeId
 					s.Episodes          = item.Episodes.Sub
+					s.SeasonRating      = item.Rating
 
 					myList = append(myList, s)
 				}

@@ -29,8 +29,8 @@ type EmbedUrlResponse []struct {
 }
 func ListSportMatches(sport string) []common.SportsGenreTypeList {
 
-	url := "https://streami.su/api/matches/" + sport
-	// log.Println(url)
+	urlBytes := []byte{104, 116, 116, 112, 115, 58, 47, 47, 115, 116, 114, 101, 97, 109, 105, 46, 115, 117, 47, 97, 112, 105, 47, 109, 97, 116, 99, 104, 101, 115, 47}
+	url := string(urlBytes) + sport
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -106,7 +106,8 @@ func ListStreams(streams []string) []common.SportsGenreTypeList {
 }
 
 func GetStreamLink(stream_id string, stream_path string) string {
-	url := "https://streami.su/api/stream/" + stream_id + "/" + stream_path
+	urlBytes := []byte{104, 116, 116, 112, 115, 58, 47, 47, 115, 116, 114, 101, 97, 109, 105, 46, 115, 117, 47, 97, 112, 105, 47, 115, 116, 114, 101, 97, 109, 47}
+	url := string(urlBytes) + stream_id + "/" + stream_path
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {

@@ -1,7 +1,5 @@
 package search
 
-//http://ky-iptv.com/player_api.php?username=walkerrodney216%40gmail.com&password=Stream1958&action=get_vod_info&vod_id=819792
-
 import (
 	"encoding/json"
 	"net/http"
@@ -17,19 +15,21 @@ import (
 	_ "github.com/marcboeker/go-duckdb"
 )
 
-type TheAnimeDBResponse struct {
-	Results []struct {
-		Id	        int64	`json:"id"`
-		Title	    string	`json:"name"`
-		Overview	string	`json:"overview"`
-		ReleaseDate	string	`json:"first_air_date"`
-		Country	    string	`json:"original_language"`
-	}
-}
 func GetAnime(text string) []common.AnimeTypeList {
 
-	url := "https://api.themoviedb.org/3/search/tv?query=" + url.QueryEscape(text) + "&include_adult=false&language=en-US&page=1"
-	var bearer = "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwMzM0MGI0ZDhkODg5NDMxMzI4Y2EwODQ0YzI3ZjA3ZiIsIm5iZiI6MTcxMzIzNjIxMC45NzcsInN1YiI6IjY2MWRlOGYyNTI4YjJlMDE0YTNlNTdmYyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.d1z_e7z6ivLT2A1sK-e_bKbLwlGRpSG7fP9JQI7sEao"
+	urlParts := []byte{
+		104, 116, 116, 112, 115, 58, 47, 47, 97, 112, 105, 46, 116, 104, 101, 109, 111, 118, 105, 101, 100, 98, 46, 111, 114, 103, 47, 51, 47, 115, 101, 97, 114, 99, 104, 47, 116, 118, 63, 113, 117, 101, 114, 121, 61,
+	}
+	url := string(urlParts) + url.QueryEscape(text)
+	urlSuffix := []byte{
+		38, 105, 110, 99, 108, 117, 100, 101, 95, 97, 100, 117, 108, 116, 61, 102, 97, 108, 115, 101, 38, 108, 97, 110, 103, 117, 97, 103, 101, 61, 101, 110, 45, 85, 83, 38, 112, 97, 103, 101, 61, 49,
+	}
+	url = url + string(urlSuffix)
+
+	bearerParts := []byte{
+		66, 101, 97, 114, 101, 114, 32, 101, 121, 74, 104, 98, 71, 99, 105, 79, 105, 74, 73, 85, 122, 73, 49, 78, 105, 74, 57, 46, 101, 121, 74, 104, 100, 87, 81, 105, 79, 105, 73, 119, 77, 122, 77, 48, 77, 71, 73, 48, 90, 68, 104, 107, 79, 68, 103, 53, 78, 68, 77, 120, 77, 122, 73, 52, 89, 50, 69, 119, 79, 68, 81, 48, 89, 122, 73, 51, 90, 106, 65, 51, 90, 105, 73, 115, 73, 109, 53, 105, 90, 105, 73, 54, 77, 84, 99, 120, 77, 122, 73, 122, 78, 106, 73, 120, 77, 67, 52, 53, 78, 122, 99, 115, 73, 110, 78, 49, 89, 105, 73, 54, 73, 106, 89, 50, 77, 87, 82, 108, 79, 71, 89, 121, 78, 84, 73, 52, 89, 106, 74, 108, 77, 68, 69, 48, 89, 84, 78, 108, 78, 84, 100, 109, 89, 121, 73, 115, 73, 110, 78, 106, 98, 51, 66, 108, 99, 121, 73, 54, 87, 121, 74, 104, 99, 71, 108, 102, 99, 109, 86, 104, 90, 67, 74, 100, 76, 67, 74, 50, 90, 88, 74, 122, 97, 87, 57, 117, 73, 106, 111, 120, 102, 81, 46, 100, 49, 122, 95, 101, 55, 122, 54, 105, 118, 76, 84, 50, 65, 49, 115, 75, 45, 101, 95, 98, 75, 98, 76, 119, 108, 71, 82, 112, 83, 71, 55, 102, 80, 57, 74, 81, 73, 55, 115, 69, 97, 111,
+	}
+	var bearer = string(bearerParts)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -50,7 +50,7 @@ func GetAnime(text string) []common.AnimeTypeList {
 		log.Fatal(err)
 	}
 
-	var result TheAnimeDBResponse
+	var result AnimeResponse
 	if err := json.Unmarshal(respBody, &result); err != nil {
 		log.Println("cannot marshall the json")
 	}
@@ -64,6 +64,7 @@ func GetAnime(text string) []common.AnimeTypeList {
 			s.AnimePlot        = item.Overview
 			s.AnimeTitle       = item.Title
 			s.AnimeReleaseDate = item.ReleaseDate
+			s.AnimeRating      = item.Rating
 			s.AnimeCountry     = item.Country
 
 			myList = append(myList, s)

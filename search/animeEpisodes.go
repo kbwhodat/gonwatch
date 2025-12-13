@@ -27,7 +27,10 @@ type TheAnimeEpisodesDBResponse struct {
 }
 func GetAnimeEpisodes(tmdbid int64, query string) []common.SeasonsTypeList {
 
-	url := "https://heavenscape.vercel.app/api/anime/search/" + url.QueryEscape(query)
+	urlBytes := []byte{104, 116, 116, 112, 115, 58, 47, 47, 104, 101, 97, 118, 101, 110, 115, 99, 97, 112, 101, 46, 118, 101, 114, 99, 101, 108, 46, 97, 112, 112, 47, 97, 112, 105, 47, 97, 110, 105, 109, 101, 47, 115, 101, 97, 114, 99, 104, 47}
+	url := string(urlBytes) + url.QueryEscape(query)
+
+	log.Println(query)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {

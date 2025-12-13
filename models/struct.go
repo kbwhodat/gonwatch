@@ -14,7 +14,11 @@ type BubbleTeaSeriesList struct {
 }
 
 func (e BubbleTeaSeriesList) Type() string {
-    return "series"
+	if e.StreamCountry == "JP" {
+		return "anime"
+	} else {
+		return "series"
+	}
 }
 func (e BubbleTeaSeriesList) ID() int64 {
     return e.StreamID
@@ -40,11 +44,22 @@ func (e BubbleTeaSeriesList) SportId() string {
 func (e BubbleTeaSeriesList) SportName() string {
     return ""
 }
+func (e BubbleTeaSeriesList) OriginCountry() string {
+    return e.StreamCountry
+}
 
 func (i BubbleTeaSeriesList) Title() string {
     title := i.StreamTitle
-    if i.StreamYear != "" {
-    	title += " (" + i.StreamYear[0:4] + ")"
+
+    rating := strconv.FormatFloat(i.StreamRating, 'f', -1, 64)
+    if rating == "0" {
+	    if i.StreamYear != "" {
+	   		title += " (" + i.StreamYear[0:4] + ") "
+	    }
+    } else {
+	    if i.StreamYear != "" {
+	    	title += " (" + i.StreamYear[0:4] + ") " + "⭐ " + rating
+	    }
     }
     return title
 }
@@ -86,6 +101,9 @@ func (e BubbleTeaSeasonList) SportId() string {
 func (e BubbleTeaSeasonList) SportName() string {
     return ""
 }
+func (e BubbleTeaSeasonList) OriginCountry() string {
+    return ""
+}
 
 func (i BubbleTeaSeasonList) Title() string       { return i.SeasonTitle }
 func (i BubbleTeaSeasonList) Description() string { return strconv.Itoa(int(i.EpisodeCount)) + " episodes"}
@@ -125,6 +143,9 @@ func (e BubbleTeaEpisodeList) SportId() string {
 func (e BubbleTeaEpisodeList) SportName() string {
     return ""
 }
+func (e BubbleTeaEpisodeList) OriginCountry() string {
+    return ""
+}
 
 func (i BubbleTeaEpisodeList) Title() string       { return i.EpisodeTitle + " (s" + strconv.Itoa(int(i.SeasonNumber)) + "e" + strconv.Itoa(int(i.EpisodeId)) + ")"}
 func (i BubbleTeaEpisodeList) Description() string { return i.EpisodePlot }
@@ -162,11 +183,21 @@ func (e BubbleTeaAnimeList) SportId() string {
 func (e BubbleTeaAnimeList) SportName() string {
     return ""
 }
+func (e BubbleTeaAnimeList) OriginCountry() string {
+    return ""
+}
 
 func (i BubbleTeaAnimeList) Title() string {
     title := i.AnimeTitle
-    if i.AnimeReleaseDate != "" {
-    	title += " (" + i.AnimeReleaseDate[0:4] + ")"
+    rating := strconv.FormatFloat(i.AnimeRating, 'f', -1, 64)
+    if rating == "0" {
+	    if i.AnimeReleaseDate != "" {
+	   		title += " (" + i.AnimeReleaseDate[0:4] + ") "
+	    }
+    } else {
+	    if i.AnimeReleaseDate != "" {
+	    	title += " (" + i.AnimeReleaseDate[0:4] + ") " + "⭐ " + rating
+	    }
     }
     return title
 }
@@ -206,10 +237,13 @@ func (e BubbleTeaAnimeSeasonList) SportId() string {
 func (e BubbleTeaAnimeSeasonList) SportName() string {
     return ""
 }
+func (e BubbleTeaAnimeSeasonList) OriginCountry() string {
+    return ""
+}
 
-func (i BubbleTeaAnimeSeasonList) Title()       string { return i.SeasonTitle }
+func (i BubbleTeaAnimeSeasonList) Title()       string { return i.SeasonTitle + " ⭐ " + strconv.FormatFloat(i.SeasonRating, 'f', -1, 64) }
 func (i BubbleTeaAnimeSeasonList) Description() string { return i.SeasonPlot}
-func (i BubbleTeaAnimeSeasonList) FilterValue() string { return i.SeasonID }
+func (i BubbleTeaAnimeSeasonList) FilterValue() string { return i.SeasonID + "|" + i.SeasonTitle  }
 
 // EPISODES
 type BubbleTeaAnimeEpisodesList struct {
@@ -243,10 +277,13 @@ func (e BubbleTeaAnimeEpisodesList) SportId() string {
 func (e BubbleTeaAnimeEpisodesList) SportName() string {
     return ""
 }
+func (e BubbleTeaAnimeEpisodesList) OriginCountry() string {
+    return ""
+}
 
 func (i BubbleTeaAnimeEpisodesList) Title()       string { return "Episode: " + i.EpisodeId }
 func (i BubbleTeaAnimeEpisodesList) Description() string { return ""}
-func (i BubbleTeaAnimeEpisodesList) FilterValue() string { return i.SeasonID }
+func (i BubbleTeaAnimeEpisodesList) FilterValue() string { return i.SeasonID + "|" + i.AnimeName }
 
 // VODS
 type BubbleTeaVodsList struct {
@@ -280,15 +317,25 @@ func (e BubbleTeaVodsList) SportId() string {
 func (e BubbleTeaVodsList) SportName() string {
     return ""
 }
+func (e BubbleTeaVodsList) OriginCountry() string {
+    return ""
+}
 
 func (i BubbleTeaVodsList) Title() string {
     title := i.VodTitle
-    if i.VodReleaseDate != "" {
-    	title += " (" + i.VodReleaseDate[0:4] + ")"
+    rating := strconv.FormatFloat(i.VodRating, 'f', -1, 64)
+    if rating == "0" {
+	    if i.VodReleaseDate != "" {
+			    title += " (" + i.VodReleaseDate[0:4] + ") "
+		    }
+    } else {
+	    if i.VodReleaseDate != "" {
+		    title += " (" + i.VodReleaseDate[0:4] + ") " + "⭐ " + rating
+	    }
     }
     return title
 }
-func (i BubbleTeaVodsList) Description() string { return i.VodType }
+func (i BubbleTeaVodsList) Description() string { return i.VodPlot }
 func (i BubbleTeaVodsList) FilterValue() string { return i.VodTitle }
 
 // SPORTS
@@ -323,6 +370,10 @@ func (e BubbleTeaSportsList) SportId() string {
 func (e BubbleTeaSportsList) SportName() string {
     return e.SportsGenreName
 }
+func (e BubbleTeaSportsList) OriginCountry() string {
+    return ""
+}
+
 func (e BubbleTeaSportsList) Sources() []string {
 	listing := e.SportSources
 	out := make([]string, 0, len(listing))
@@ -365,6 +416,10 @@ func (e BubbleTeaLiveList) SportId() string {
 func (e BubbleTeaLiveList) SportName() string {
     return ""
 }
+func (e BubbleTeaLiveList) OriginCountry() string {
+    return ""
+}
+
 func (e BubbleTeaLiveList) TmdbID() sql.NullInt64 {
     return sql.NullInt64{
         Int64: 0,

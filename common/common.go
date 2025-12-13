@@ -1,11 +1,13 @@
 package common
 
 type StreamTypeList struct {
-    StreamTitle string
-    StreamID    int64
-    StreamPlot  string
-    StreamYear  string
-    StreamType  string
+    StreamTitle    string
+    StreamID       int64
+    StreamPlot     string
+    StreamYear     string
+    StreamType     string
+    StreamCountry  string
+    StreamRating   float64
 }
 
 type SeasonsTypeList struct {
@@ -17,6 +19,7 @@ type SeasonsTypeList struct {
     SeasonReleaseDate string
     SeriesID  	      int64
     Episodes  	      []string
+    SeasonRating      float64
 }
 
 type EpisodeTypeList struct {
@@ -31,6 +34,7 @@ type EpisodeTypeList struct {
 }
 
 type AnimeEpisodeTypeList struct {
+	AnimeName          string
     EpisodeTitle       string
     SeasonID           string
     EpisodePlot        string
@@ -49,6 +53,7 @@ type AnimeTypeList struct {
     AnimeTmdbID      int64
     AnimeReleaseDate string
     AnimeCountry     string
+    AnimeRating      float64
 }
 
 type SportsGenreTypeList struct {
@@ -64,9 +69,11 @@ type SportsGenreTypeList struct {
 type VodTypeList struct {
 	VodTitle       string
     VodID          int64
-    VodType        string
+    VodPlot        string
     VodTmdbID      int64
     VodReleaseDate string
+    VodCountry     string
+    VodRating      float64
 }
 
 type LiveTypeList struct {

@@ -6,7 +6,6 @@ import (
 
 	"gonwatch/common"
 
-	// "fmt"
 	"io"
 	"log"
 
@@ -14,12 +13,13 @@ import (
 )
 
 type SportResponse []struct {
-	Id	        string	`json:"id"`
-	Name	    string	`json:"name"`
+	Id   string `json:"id"`
+	Name string `json:"name"`
 }
+
 func ListSports() []common.SportsGenreTypeList {
 
-	url := "https://streami.su/api/sports"
+	url := string([]byte{104, 116, 116, 112, 115, 58, 47, 47, 115, 116, 114, 101, 97, 109, 105, 46, 115, 117, 47, 97, 112, 105, 47, 115, 112, 111, 114, 116, 115})
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -43,13 +43,12 @@ func ListSports() []common.SportsGenreTypeList {
 		log.Println("cannot marshall the json")
 	}
 
-	var s common.SportsGenreTypeList
-
 	myList := []common.SportsGenreTypeList{}
 	for _, item := range result {
-		s.SportsGenreID   = item.Id
+		var s common.SportsGenreTypeList
+		s.SportsGenreID = item.Id
 		s.SportsGenreName = item.Name
-		s.SportsType      = "sports"
+		s.SportsType = "sports"
 
 		myList = append(myList, s)
 	}

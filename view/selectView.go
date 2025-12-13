@@ -7,11 +7,11 @@ import (
 )
 
 func SelectView(selectedIndex int) string {
-	// Get terminal width directly within the view function
+	// get terminal width directly within the view function
 	w, h, err := term.GetSize(int(os.Stdout.Fd()))
+	// fallback option
 	if err != nil {
-		// Handle the error or fallback to a default width
-		w = 80 // Fallback to a default width if there's an error
+		w = 80
 		h = 24
 	}
 
@@ -28,6 +28,30 @@ func SelectView(selectedIndex int) string {
 		s.WriteString("\n")
 	}
 
-	// Use centerText function to center the content based on the current terminal width
 	return centerText(s.String(), w, h)
+}
+
+func TrendingSelectView(selectedIndex int) string {
+	// get terminal width directly within the view function
+	w, h, err := term.GetSize(int(os.Stdout.Fd()))
+	// fallback option
+	if err != nil {
+		w = 80
+		h = 24
+	}
+
+	ss := strings.Builder{}
+	ss.WriteString("Select trending content to view.\n\n")
+
+	for i := 0; i < len(TrendingChoiceList); i++ {
+		if selectedIndex == i {
+			ss.WriteString("(•) ")
+		} else {
+			ss.WriteString("( ) ")
+		}
+		ss.WriteString(TrendingChoiceList[i].choice)
+		ss.WriteString("\n")
+	}
+
+	return centerText(ss.String(), w, h)
 }

@@ -7,7 +7,6 @@ require (
 	github.com/charmbracelet/bubbles v0.21.0
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
-	github.com/dustin/go-humanize v1.0.1
 	github.com/marcboeker/go-duckdb v1.8.5
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	golang.org/x/term v0.35.0

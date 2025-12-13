@@ -5,6 +5,8 @@ pkgs.mkShell {
     # streamlink
     gcc
     python313Packages.python
+    python313Packages.tls-client
+    python313Packages.beautifulsoup4
     python313Packages.langdetect
     python313Packages.requests
     python313Packages.websockets

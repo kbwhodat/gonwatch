@@ -13,8 +13,9 @@ import (
 )
 
 type IDMappings []struct {
-	AnilistID        int    `json:"anilist_id,omitempty"`
-	ThemoviedbID     any    `json:"themoviedb_id,omitempty"`
+	AnilistID         int    `json:"anilist_id,omitempty"`
+	ThemoviedbID      any    `json:"themoviedb_id,omitempty"`
+	AnimePlanetID     any    `json:"anime_planet_id,omitempty"`
 }
 
 func getAniListId(mappings IDMappings, tmdbid int64) []int {

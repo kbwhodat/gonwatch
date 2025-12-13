@@ -17,7 +17,7 @@ func SeriesModel(m *Model, items []common.StreamTypeList) {
 	}
 
 	m.List = list.New(listItems, list.NewDefaultDelegate(), 0, 0)
-	m.List.Title = "Results"
+	m.List.Title = "Shows"
 
 	w, h, _ := term.GetSize(int(os.Stdout.Fd()))
 	m.List.SetSize(w-2, h-2)

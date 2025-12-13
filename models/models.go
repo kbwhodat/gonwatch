@@ -8,6 +8,7 @@ import (
 	"log"
 	"slices"
 	"strconv"
+	"strings"
 
 	// "log"
 
@@ -44,15 +45,16 @@ type Model struct {
 }
 
 type ListItem interface {
-	ID()        int64
-	TmdbID()    int64
-	Type() 	    string
-	SznNumber() int
-	SznID() 	int
-	EpList() 	[]string
-	EpString() 	string
-	SportName() string
-	SportId() 	string
+	ID()            int64
+	TmdbID()        int64
+	Type() 	        string
+	SznNumber()     int
+	SznID() 	    int
+	EpList() 	    []string
+	EpString() 	    string
+	SportName()     string
+	SportId() 	    string
+	OriginCountry() string
 }
 
 type SportsSources interface {
@@ -77,9 +79,10 @@ func fetchEpisodeCmd(item ListItem, m *Model) tea.Cmd {
 		var ok bool
 		if selectedItem.Type() == "anime episodes" {
 			episode_number, _ := strconv.Atoi(selectedItem.EpString())
-			ok = len(watch.PlayTv("anime", item.TmdbID(), int64(item.SznNumber()), int64(episode_number), m.List.SelectedItem().FilterValue())) > 0
+			filteredValue := strings.Split(m.List.SelectedItem().FilterValue(), "|")
+			ok = len(watch.PlayTv("anime", item.TmdbID(), int64(item.SznNumber()), int64(episode_number), filteredValue[0], filteredValue[1])[0]) > 0
 		} else {
-			ok = len(watch.PlayTv("tv", item.TmdbID(), int64(item.SznNumber()), item.ID(), m.List.SelectedItem().FilterValue())) > 0
+			ok = len(watch.PlayTv("tv", item.TmdbID(), int64(item.SznNumber()), item.ID(), m.List.SelectedItem().FilterValue(), "")) > 0
 		}
 
 		return linkFetchedMsg{found: ok}
@@ -134,22 +137,38 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "down", "j":
 			m.Cursor++
-			if m.Cursor >= len(choiceList) {
-				m.Cursor = 0
+			if m.Mode == "trending" {
+				if m.Cursor >= len(TrendingChoiceList) {
+					m.Cursor = 0
+				}
+			} else {
+				if m.Cursor >= len(choiceList) {
+					m.Cursor = 0
+				}
 			}
 
 		case "up", "k":
 			m.Cursor--
-			if m.Cursor < 0 {
-				m.Cursor = len(choiceList) - 1
+			if m.Mode == "trending" {
+				if m.Cursor < 0 {
+					m.Cursor = len(TrendingChoiceList) - 1
+				}
+			} else {
+				if m.Cursor < 0 {
+					m.Cursor = len(choiceList) - 1
+				}
 			}
 
 		case "enter", "right":
+
 			m.saveCurrentState()
 			if m.Mode == "list" {
 				selectedItem, ok := m.List.SelectedItem().(ListItem)
 				if ok {
 					switch selectedItem.Type() {
+
+					case "movie":
+						log.Println("hello there kind sir")
 
 					case "streams":
 						m.loading = true
@@ -184,6 +203,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					case "series":
 						seasonList := search.GetSeasons(selectedItem.ID())
 						SeasonModel(m, seasonList)
+
+					case "trending":
+						log.Println("in the trending ting!")
 
 					case "season":
 						episodeList := search.GetEpisodes(selectedItem.TmdbID(), selectedItem.SznNumber())
@@ -247,11 +269,25 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.Mode = "fullscreen"
 			}
 
+			if m.Mode == "trending" {
+				selected := TrendingChoiceList[m.Cursor]
+				if selected.FilterValue() == "movie" {
+					moviesList := search.GetTrendingMovies()
+					VodModel(m, moviesList)
+				} else {
+					tvList := search.GetTrendingTv()
+					SeriesModel(m, tvList)
+				}
+			}
+
 			if m.Mode == "select" {
 				m.Choice = choiceList[m.Cursor]
 				if m.Choice.FilterValue() == "sports" {
 					genreList := search.ListSports()
 					SportsModel(m, genreList)
+
+				} else if m.Choice.FilterValue() == "trending" {
+					TrendingModel(m)
 
 				} else {
 					InputModel(m)
@@ -288,11 +324,19 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m Model) View() string {
 	switch m.Mode {
-	case "fullscreen":
-		return view.FullscreenView(
-			keywordStyle.Render(m.List.SelectedItem().FilterValue()),
-			helpStyle.Render("\n\n\nleft/h: go back • q: exit/quit\n"),
-		)
+		case "fullscreen":
+		filteredValue := strings.Split(m.List.SelectedItem().FilterValue(), "|")
+		if len(filteredValue) > 1 {
+			return view.FullscreenView(
+				keywordStyle.Render(filteredValue[1]),
+				helpStyle.Render("\n\n\nleft/h: go back • q: exit/quit\n"),
+			)
+		} else {
+			return view.FullscreenView(
+				keywordStyle.Render(m.List.SelectedItem().FilterValue()),
+				helpStyle.Render("\n\n\nleft/h: go back • q: exit/quit\n"),
+			)
+		}
 
 	case "linknotfoundscreen":
 		return view.LinkNotFoundView(
@@ -308,6 +352,9 @@ func (m Model) View() string {
 
 	case "select":
 		return view.SelectView(m.Cursor)
+
+	case "trending":
+		return view.TrendingSelectView(m.Cursor)
 
 	case "loading":
 		return "\n\n  " + m.spinner.View() + " " + m.loadingLabel
