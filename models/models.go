@@ -1,6 +1,7 @@
 package models
 
 import (
+	"gonwatch/history"
 	"gonwatch/search"
 	"gonwatch/update"
 	"gonwatch/view"
@@ -27,33 +28,39 @@ var (
 var sportGenres = []string{"basketball", "football", "american-football", "hockey", "baseball", "motor-sports", "fight", "tennis", "rugby", "golf", "billiards", "afl", "darts", "cricket", "other"}
 
 type Model struct {
-	TextInput 	   textinput.Model
-	List 		   list.Model
-	Mode		   string
-	Err       	   error
+	TextInput      textinput.Model
+	List           list.Model
+	Mode           string
+	Err            error
 	PreviousStates []ModelStateSnapshot
-	Cursor 		   int
-	Choice 		   Choices
-	Altscreen 	   bool
-	Id			   int
-	TmdbID		   int
+	Cursor         int
+	Choice         Choices
+	Altscreen      bool
+	Id             int
+	TmdbID         int
 	SelectedItem   string
 
-	spinner        spinner.Model
-	loading        bool
-	loadingLabel   string
+	spinner      spinner.Model
+	loading      bool
+	loadingLabel string
+
+	// Playing item context for marking watched on success
+	playingItem     ListItem
+	playingTmdbID   int64  // Parent context for anime episodes
+	playingSeason   int    // Parent context for TV episodes
+	playingSeasonID string // Parent context for anime episodes (season ID string)
 }
 
 type ListItem interface {
-	ID()            int64
-	TmdbID()        int64
-	Type() 	        string
-	SznNumber()     int
-	SznID() 	    int
-	EpList() 	    []string
-	EpString() 	    string
-	SportName()     string
-	SportId() 	    string
+	ID() int64
+	TmdbID() int64
+	Type() string
+	SznNumber() int
+	SznID() int
+	EpList() []string
+	EpString() string
+	SportName() string
+	SportId() string
 	OriginCountry() string
 }
 
@@ -111,6 +118,34 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case linkFetchedMsg:
 		m.loading = false
 		if msg.found {
+			if m.playingItem != nil {
+				switch m.playingItem.Type() {
+				case "episode":
+					history.MarkWatched(
+						"episode",
+						m.playingItem.TmdbID(),
+						m.playingItem.SznNumber(),
+						m.playingItem.ID(),
+						m.List.SelectedItem().FilterValue(),
+					)
+				case "anime episodes":
+					episodeNum, _ := strconv.ParseInt(m.playingItem.EpString(), 10, 64)
+					history.MarkAnimeEpisodeWatchedBySeasonID(
+						m.playingTmdbID,
+						m.playingSeasonID,
+						episodeNum,
+						m.List.SelectedItem().FilterValue(),
+					)
+				case "vods":
+					history.MarkWatched(
+						"movie",
+						m.playingItem.TmdbID(),
+						0,
+						0,
+						m.List.SelectedItem().FilterValue(),
+					)
+				}
+			}
 			m.Altscreen = true
 			m.Mode = "fullscreen"
 			return m, tea.EnterAltScreen
@@ -190,10 +225,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						} else {
 							sel := m.List.SelectedItem()
 							match, ok := sel.(SportsSources)
-					        if !ok {
-					            log.Printf("unexpected item type: %T\n", sel)
-					            break
-					        }
+							if !ok {
+								log.Printf("unexpected item type: %T\n", sel)
+								break
+							}
 
 							streamlist := search.ListStreams(match.Sources())
 							MatchesModel(m, streamlist)
@@ -217,12 +252,18 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 					case "anime seasons":
 						episodeList := search.GetAnimeEpisodeList(selectedItem.EpList(), m.List.SelectedItem().FilterValue())
-						AnimeEpisodesModel(m, episodeList)
+						seasonFilterValue := strings.Split(m.List.SelectedItem().FilterValue(), "|")
+						seasonID := ""
+						if len(seasonFilterValue) > 0 {
+							seasonID = seasonFilterValue[0]
+						}
+						AnimeEpisodesModel(m, episodeList, selectedItem.TmdbID(), seasonID)
 
 					case "anime episodes":
 						m.loading = true
 						m.loadingLabel = "Fetching content…"
 						m.Mode = "loading"
+						m.playingItem = selectedItem
 						return m, tea.Batch(
 							m.spinner.Tick,
 							fetchEpisodeCmd(selectedItem, m),
@@ -232,6 +273,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						m.loading = true
 						m.loadingLabel = "Fetching content…"
 						m.Mode = "loading"
+						m.playingItem = selectedItem
 						return m, tea.Batch(
 							m.spinner.Tick,
 							fetchEpisodeCmd(selectedItem, m),
@@ -241,6 +283,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						m.loading = true
 						m.loadingLabel = "Fetching content…"
 						m.Mode = "loading"
+						m.playingItem = selectedItem
 						return m, tea.Batch(
 							m.spinner.Tick,
 							fetchMovieCmd(selectedItem),
@@ -253,15 +296,15 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.Mode == "input" {
 				selectedItem := m.Choice.choice
 				switch selectedItem {
-					case "movies":
-						resultList := update.InputUpdateMsgVods(m.TextInput)
-						VodModel(m, resultList)
-					case "series":
-						resultList := update.InputUpdateMsgSeries(m.TextInput)
-						SeriesModel(m, resultList)
-					case "anime":
-						resultList := update.InputUpdateMsgAnime(m.TextInput)
-						AnimeModel(m, resultList)
+				case "movies":
+					resultList := update.InputUpdateMsgVods(m.TextInput)
+					VodModel(m, resultList)
+				case "series":
+					resultList := update.InputUpdateMsgSeries(m.TextInput)
+					SeriesModel(m, resultList)
+				case "anime":
+					resultList := update.InputUpdateMsgAnime(m.TextInput)
+					AnimeModel(m, resultList)
 				}
 			}
 
@@ -324,7 +367,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m Model) View() string {
 	switch m.Mode {
-		case "fullscreen":
+	case "fullscreen":
 		filteredValue := strings.Split(m.List.SelectedItem().FilterValue(), "|")
 		if len(filteredValue) > 1 {
 			return view.FullscreenView(

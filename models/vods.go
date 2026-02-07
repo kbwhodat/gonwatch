@@ -1,11 +1,11 @@
 package models
 
 import (
-	"gonwatch/common"
-	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/key"
-	"os"
+	"github.com/charmbracelet/bubbles/list"
 	"golang.org/x/term"
+	"gonwatch/common"
+	"os"
 )
 
 func VodModel(m *Model, items []common.VodTypeList) {
@@ -16,7 +16,8 @@ func VodModel(m *Model, items []common.VodTypeList) {
 		listItems[i] = BubbleTeaVodsList{VodTypeList: item}
 	}
 
-	m.List = list.New(listItems, list.NewDefaultDelegate(), 0, 0)
+	delegate := NewWatchedAwareDelegate()
+	m.List = list.New(listItems, delegate, 0, 0)
 	m.List.Title = "Movies"
 
 	w, h, _ := term.GetSize(int(os.Stdout.Fd()))

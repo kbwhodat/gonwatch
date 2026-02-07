@@ -15,7 +15,6 @@ import (
 	_ "github.com/marcboeker/go-duckdb"
 )
 
-
 func GetTrendingMovies() []common.VodTypeList {
 
 	urlBytes := []byte{104, 116, 116, 112, 115, 58, 47, 47, 97, 112, 105, 46, 116, 104, 101, 109, 111, 118, 105, 101, 100, 98, 46, 111, 114, 103, 47, 51, 47, 116, 114, 101, 110, 100, 105, 110, 103, 47, 109, 111, 118, 105, 101, 47, 119, 101, 101, 107}
@@ -52,13 +51,14 @@ func GetTrendingMovies() []common.VodTypeList {
 
 	myList := []common.VodTypeList{}
 	for _, item := range result.Results {
-		s.VodID           = item.Id
-		s.VodPlot         = item.Overview
-		s.VodTitle        = item.Title
-		s.VodReleaseDate  = item.ReleaseDate
-		s.VodRating       = item.Rating
-		if len(item.OriginCountry) > 0  {
-			s.VodCountry  = item.OriginCountry[0]
+		s.VodID = item.Id
+		s.VodTmdbID = item.Id
+		s.VodPlot = item.Overview
+		s.VodTitle = item.Title
+		s.VodReleaseDate = item.ReleaseDate
+		s.VodRating = item.Rating
+		if len(item.OriginCountry) > 0 {
+			s.VodCountry = item.OriginCountry[0]
 		}
 
 		myList = append(myList, s)

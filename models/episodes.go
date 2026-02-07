@@ -3,10 +3,10 @@ package models
 import (
 	"os"
 	// "log"
-	"gonwatch/common"
-	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/key"
+	"github.com/charmbracelet/bubbles/list"
 	"golang.org/x/term"
+	"gonwatch/common"
 )
 
 func EpisodeModel(m *Model, items []common.EpisodeTypeList) {
@@ -17,7 +17,8 @@ func EpisodeModel(m *Model, items []common.EpisodeTypeList) {
 		listItems[i] = BubbleTeaEpisodeList{EpisodeTypeList: item}
 	}
 
-	m.List = list.New(listItems, list.NewDefaultDelegate(), 0, 0)
+	delegate := NewWatchedAwareDelegate()
+	m.List = list.New(listItems, delegate, 0, 0)
 	m.List.Title = "Episodes"
 
 	w, h, _ := term.GetSize(int(os.Stdout.Fd()))
