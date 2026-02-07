@@ -11,8 +11,6 @@ import (
 	// "fmt"
 	"io"
 	"log"
-
-	_ "github.com/marcboeker/go-duckdb"
 )
 
 func GetTrendingTv() []common.StreamTypeList {
@@ -51,12 +49,12 @@ func GetTrendingTv() []common.StreamTypeList {
 
 	myList := []common.StreamTypeList{}
 	for _, item := range result.Results {
-		s.StreamID      = item.Id
-		s.StreamPlot    = item.Overview
-		s.StreamTitle   = item.Title
-		s.StreamYear    = item.ReleaseDate
-		s.StreamRating  = item.Rating
-		if len(item.OriginCountry) > 0  {
+		s.StreamID = item.Id
+		s.StreamPlot = item.Overview
+		s.StreamTitle = item.Title
+		s.StreamYear = item.ReleaseDate
+		s.StreamRating = item.Rating
+		if len(item.OriginCountry) > 0 {
 			s.StreamCountry = item.OriginCountry[0]
 		}
 

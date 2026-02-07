@@ -10,23 +10,21 @@ import (
 	// "fmt"
 	"io"
 	"log"
-
-	_ "github.com/marcboeker/go-duckdb"
 )
 
 type MatchesSportsResponse []struct {
-	Id	        string	 `json:"id"`
-	Name	    string	 `json:"title"`
-	Sources     []struct {
+	Id      string `json:"id"`
+	Name    string `json:"title"`
+	Sources []struct {
 		SourceName string `json:"source"`
-		Source_id string `json:"id"`
+		Source_id  string `json:"id"`
 	} `json:"sources"`
 }
 type EmbedUrlResponse []struct {
 	EmbdUrl string `json:"embedUrl"`
 	Viewers int64  `json:"viewers"`
-
 }
+
 func ListSportMatches(sport string) []common.SportsGenreTypeList {
 
 	urlBytes := []byte{104, 116, 116, 112, 115, 58, 47, 47, 115, 116, 114, 101, 97, 109, 105, 46, 115, 117, 47, 97, 112, 105, 47, 109, 97, 116, 99, 104, 101, 115, 47}
@@ -58,27 +56,27 @@ func ListSportMatches(sport string) []common.SportsGenreTypeList {
 
 	myList := []common.SportsGenreTypeList{}
 	for _, item := range result {
-		s.SportsGenreID    = item.Id
-		s.SportsGenreName  = item.Name
+		s.SportsGenreID = item.Id
+		s.SportsGenreName = item.Name
 
 		// initializing sports struct to be used
 		var sportSources []struct {
 			SportsSourceName string
-			SportsSourceId string
+			SportsSourceId   string
 		}
 
 		// using anonymous struct here. Named struct would be an easier implementation as I would not have to redefine the shape of the struct
 		for _, sources := range item.Sources {
 			sportSources = append(sportSources, struct {
 				SportsSourceName string
-				SportsSourceId string
+				SportsSourceId   string
 			}{
 				SportsSourceName: sources.SourceName,
-				SportsSourceId: sources.Source_id,
+				SportsSourceId:   sources.Source_id,
 			})
 		}
 
-		s.SportsType   = "sports"
+		s.SportsType = "sports"
 		s.SportSources = sportSources
 
 		myList = append(myList, s)
@@ -95,10 +93,10 @@ func ListStreams(streams []string) []common.SportsGenreTypeList {
 		key, value, _ := strings.Cut(item, ":")
 		// log.Println("key:" + key)
 		// log.Println("value:" + value)
-		s.SportsGenreID    = value
-		s.SportsGenreName  = key
+		s.SportsGenreID = value
+		s.SportsGenreName = key
 
-		s.SportsType   = "streams"
+		s.SportsType = "streams"
 		myList = append(myList, s)
 	}
 
@@ -130,7 +128,6 @@ func GetStreamLink(stream_id string, stream_path string) string {
 	if err := json.Unmarshal(respBody, &result); err != nil {
 		log.Println("cannot marshall the json")
 	}
-
 
 	var embedUrl string
 	for _, item := range result {

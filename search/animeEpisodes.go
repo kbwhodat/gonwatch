@@ -13,18 +13,17 @@ import (
 	"io"
 	"log"
 	"net/url"
-
-	_ "github.com/marcboeker/go-duckdb"
 )
 
 type TheAnimeEpisodesDBResponse struct {
 	Result []struct {
-		AnimeId	   string  `json:"id"`
-		EnglishName    string `json:"englishName"`
+		AnimeId     string `json:"id"`
+		EnglishName string `json:"englishName"`
 		Description string `json:"description"`
-		Status   string  `json:"status"`
+		Status      string `json:"status"`
 	}
 }
+
 func GetAnimeEpisodes(tmdbid int64, query string) []common.SeasonsTypeList {
 
 	urlBytes := []byte{104, 116, 116, 112, 115, 58, 47, 47, 104, 101, 97, 118, 101, 110, 115, 99, 97, 112, 101, 46, 118, 101, 114, 99, 101, 108, 46, 97, 112, 112, 47, 97, 112, 105, 47, 97, 110, 105, 109, 101, 47, 115, 101, 97, 114, 99, 104, 47}
@@ -62,12 +61,12 @@ func GetAnimeEpisodes(tmdbid int64, query string) []common.SeasonsTypeList {
 			lengthOfString := len(query)
 			if lengthOfString <= len(item.EnglishName) {
 				if strings.EqualFold(item.EnglishName[0:lengthOfString], strings.ToLower(query)) {
-					s.SeriesID          = tmdbid
+					s.SeriesID = tmdbid
 					// s.EpisodeCount      = item.EpisodeCount
-					s.SeasonTitle       = item.EnglishName
-					s.SeasonPlot        = item.Description
+					s.SeasonTitle = item.EnglishName
+					s.SeasonPlot = item.Description
 					// s.SeasonNumber      = strconv.Itoa(int(item.SeasonNumber))
-					s.SeasonID          = item.AnimeId
+					s.SeasonID = item.AnimeId
 
 					myList = append(myList, s)
 				}

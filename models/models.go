@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"gonwatch/history"
 	"gonwatch/search"
 	"gonwatch/update"
@@ -10,8 +11,6 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-
-	// "log"
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/spinner"
@@ -44,11 +43,15 @@ type Model struct {
 	loading      bool
 	loadingLabel string
 
-	// Playing item context for marking watched on success
 	playingItem     ListItem
-	playingTmdbID   int64  // Parent context for anime episodes
-	playingSeason   int    // Parent context for TV episodes
-	playingSeasonID string // Parent context for anime episodes (season ID string)
+	playingTmdbID   int64
+	playingSeason   int
+	playingSeasonID string
+
+	sourcesTried  []string
+	currentSource int
+	totalSources  int
+	streamUrl     string
 }
 
 type ListItem interface {
@@ -75,39 +78,100 @@ func (m *Model) Init() tea.Cmd {
 }
 
 type linkFetchedMsg struct {
-	found bool
+	found        bool
+	sourcesTried []string
+	totalSources int
 }
 
-func fetchEpisodeCmd(item ListItem, m *Model) tea.Cmd {
-	return func() tea.Msg {
+type playbackRetryMsg struct {
+	sourcesTried []string
+	totalSources int
+}
 
+func fetchEpisodeCmd(item ListItem, m *Model, skipSources []string) tea.Cmd {
+	return func() tea.Msg {
 		selectedItem, _ := m.List.SelectedItem().(ListItem)
-		// var episode int64
-		var ok bool
+
+		var result watch.PlayResult
 		if selectedItem.Type() == "anime episodes" {
 			episode_number, _ := strconv.Atoi(selectedItem.EpString())
 			filteredValue := strings.Split(m.List.SelectedItem().FilterValue(), "|")
-			ok = len(watch.PlayTv("anime", item.TmdbID(), int64(item.SznNumber()), int64(episode_number), filteredValue[0], filteredValue[1])[0]) > 0
+			result = watch.PlayTv("anime", item.TmdbID(), int64(item.SznNumber()), int64(episode_number), filteredValue[0], filteredValue[1], skipSources)
 		} else {
-			ok = len(watch.PlayTv("tv", item.TmdbID(), int64(item.SznNumber()), item.ID(), m.List.SelectedItem().FilterValue(), "")) > 0
+			result = watch.PlayTv("tv", item.TmdbID(), int64(item.SznNumber()), item.ID(), m.List.SelectedItem().FilterValue(), "", skipSources)
 		}
 
-		return linkFetchedMsg{found: ok}
+		if result.Error != nil || !result.Success {
+			if result.UrlsFound && len(result.SourcesTried) < result.TotalSources {
+				return playbackRetryMsg{
+					sourcesTried: result.SourcesTried,
+					totalSources: result.TotalSources,
+				}
+			}
+			return linkFetchedMsg{
+				found:        false,
+				sourcesTried: result.SourcesTried,
+				totalSources: result.TotalSources,
+			}
+		}
+
+		return linkFetchedMsg{
+			found:        true,
+			sourcesTried: result.SourcesTried,
+			totalSources: result.TotalSources,
+		}
 	}
 }
-func fetchStreamCmd(url string) tea.Cmd {
 
+func fetchStreamCmd(url string, skipSources []string) tea.Cmd {
 	return func() tea.Msg {
-		ok := len(watch.PlayStream("stream", url)) > 0
-		// ok := false
-		return linkFetchedMsg{found: ok}
+		result := watch.PlayStream("stream", url, skipSources)
+
+		if result.Error != nil || !result.Success {
+			if result.UrlsFound && len(result.SourcesTried) < result.TotalSources {
+				return playbackRetryMsg{
+					sourcesTried: result.SourcesTried,
+					totalSources: result.TotalSources,
+				}
+			}
+			return linkFetchedMsg{
+				found:        false,
+				sourcesTried: result.SourcesTried,
+				totalSources: result.TotalSources,
+			}
+		}
+
+		return linkFetchedMsg{
+			found:        true,
+			sourcesTried: result.SourcesTried,
+			totalSources: result.TotalSources,
+		}
 	}
 }
-func fetchMovieCmd(item ListItem) tea.Cmd {
 
+func fetchMovieCmd(item ListItem, skipSources []string) tea.Cmd {
 	return func() tea.Msg {
-		ok := len(watch.PlayMovie("movie", item.ID())) > 0
-		return linkFetchedMsg{found: ok}
+		result := watch.PlayMovie("movie", item.ID(), skipSources)
+
+		if result.Error != nil || !result.Success {
+			if result.UrlsFound && len(result.SourcesTried) < result.TotalSources {
+				return playbackRetryMsg{
+					sourcesTried: result.SourcesTried,
+					totalSources: result.TotalSources,
+				}
+			}
+			return linkFetchedMsg{
+				found:        false,
+				sourcesTried: result.SourcesTried,
+				totalSources: result.TotalSources,
+			}
+		}
+
+		return linkFetchedMsg{
+			found:        true,
+			sourcesTried: result.SourcesTried,
+			totalSources: result.TotalSources,
+		}
 	}
 }
 
@@ -115,8 +179,39 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
+	case playbackRetryMsg:
+		m.sourcesTried = msg.sourcesTried
+		m.totalSources = msg.totalSources
+		m.currentSource = len(msg.sourcesTried) + 1
+		m.loadingLabel = fmt.Sprintf("Trying source %d of %d...", m.currentSource, m.totalSources)
+
+		if m.playingItem != nil {
+			switch m.playingItem.Type() {
+			case "episode", "anime episodes":
+				return m, tea.Batch(
+					m.spinner.Tick,
+					fetchEpisodeCmd(m.playingItem, m, msg.sourcesTried),
+				)
+			case "vods":
+				return m, tea.Batch(
+					m.spinner.Tick,
+					fetchMovieCmd(m.playingItem, msg.sourcesTried),
+				)
+			case "streams":
+				return m, tea.Batch(
+					m.spinner.Tick,
+					fetchStreamCmd(m.streamUrl, msg.sourcesTried),
+				)
+			}
+		}
+		return m, nil
+
 	case linkFetchedMsg:
 		m.loading = false
+		m.sourcesTried = nil
+		m.currentSource = 0
+		m.totalSources = 0
+
 		if msg.found {
 			if m.playingItem != nil {
 				switch m.playingItem.Type() {
@@ -207,20 +302,20 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 					case "streams":
 						m.loading = true
-						m.loadingLabel = "Fetching content…"
+						m.loadingLabel = "Fetching content..."
 						m.Mode = "loading"
-						// log.Println(m.List.SelectedItem().FilterValue())
-						// log.Println(selectedItem.SportName()) //admin
+						m.playingItem = selectedItem
+						m.sourcesTried = nil
 						url := search.GetStreamLink(selectedItem.SportName(), m.List.SelectedItem().FilterValue())
+						m.streamUrl = url
 						return m, tea.Batch(
 							m.spinner.Tick,
-							fetchStreamCmd(url),
+							fetchStreamCmd(url, nil),
 						)
 
 					case "sports":
 						if slices.Contains(sportGenres, m.List.SelectedItem().FilterValue()) {
 							matches := search.ListSportMatches(m.List.SelectedItem().FilterValue())
-							// log.Println(matches)
 							MatchesModel(m, matches)
 						} else {
 							sel := m.List.SelectedItem()
@@ -261,32 +356,35 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 					case "anime episodes":
 						m.loading = true
-						m.loadingLabel = "Fetching content…"
+						m.loadingLabel = "Fetching content..."
 						m.Mode = "loading"
 						m.playingItem = selectedItem
+						m.sourcesTried = nil
 						return m, tea.Batch(
 							m.spinner.Tick,
-							fetchEpisodeCmd(selectedItem, m),
+							fetchEpisodeCmd(selectedItem, m, nil),
 						)
 
 					case "episode":
 						m.loading = true
-						m.loadingLabel = "Fetching content…"
+						m.loadingLabel = "Fetching content..."
 						m.Mode = "loading"
 						m.playingItem = selectedItem
+						m.sourcesTried = nil
 						return m, tea.Batch(
 							m.spinner.Tick,
-							fetchEpisodeCmd(selectedItem, m),
+							fetchEpisodeCmd(selectedItem, m, nil),
 						)
 
 					case "vods":
 						m.loading = true
-						m.loadingLabel = "Fetching content…"
+						m.loadingLabel = "Fetching content..."
 						m.Mode = "loading"
 						m.playingItem = selectedItem
+						m.sourcesTried = nil
 						return m, tea.Batch(
 							m.spinner.Tick,
-							fetchMovieCmd(selectedItem),
+							fetchMovieCmd(selectedItem, nil),
 						)
 					}
 				}

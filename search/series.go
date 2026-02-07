@@ -12,8 +12,6 @@ import (
 	"io"
 	"log"
 	"net/url"
-
-	_ "github.com/marcboeker/go-duckdb"
 )
 
 func GetSeries(text string) []common.StreamTypeList {
@@ -53,12 +51,12 @@ func GetSeries(text string) []common.StreamTypeList {
 
 	myList := []common.StreamTypeList{}
 	for _, item := range result.Results {
-		s.StreamID      = item.Id
-		s.StreamPlot    = item.Overview
-		s.StreamTitle   = item.Title
-		s.StreamYear    = item.ReleaseDate
-		s.StreamRating  = item.Rating
-		if len(item.OriginCountry) > 0  {
+		s.StreamID = item.Id
+		s.StreamPlot = item.Overview
+		s.StreamTitle = item.Title
+		s.StreamYear = item.ReleaseDate
+		s.StreamRating = item.Rating
+		if len(item.OriginCountry) > 0 {
 			s.StreamCountry = item.OriginCountry[0]
 		}
 

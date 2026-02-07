@@ -11,8 +11,6 @@ import (
 	// "fmt"
 	"io"
 	"log"
-
-	_ "github.com/marcboeker/go-duckdb"
 )
 
 func GetTrendingMovies() []common.VodTypeList {

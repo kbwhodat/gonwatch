@@ -12,13 +12,11 @@ import (
 	"io"
 	"log"
 	"net/url"
-
-	_ "github.com/marcboeker/go-duckdb"
 )
 
 type TheAnimeSeasonsDBResponse struct {
 	Result []struct {
-		AnimeId	    string  `json:"id"`
+		AnimeId     string  `json:"id"`
 		EnglishName string  `json:"englishName"`
 		Description string  `json:"description"`
 		Status      string  `json:"status"`
@@ -28,9 +26,10 @@ type TheAnimeSeasonsDBResponse struct {
 		} `json:"episodes"`
 	}
 }
+
 func GetAnimeSeasons(tmdbid int64, query string) []common.SeasonsTypeList {
 
-	if strings.Contains(query, ":"){
+	if strings.Contains(query, ":") {
 		firstPart := strings.Split(query, ":")
 		query = firstPart[0]
 	}
@@ -70,14 +69,14 @@ func GetAnimeSeasons(tmdbid int64, query string) []common.SeasonsTypeList {
 			englishName := re.ReplaceAllString(strings.ToLower(query), " ")
 			if lengthOfString <= len(englishName) {
 				if strings.EqualFold(item.EnglishName[0:lengthOfString], englishName) || strings.EqualFold(item.EnglishName[0:lengthOfString], strings.ToLower(query)) {
-					s.SeriesID          = tmdbid
+					s.SeriesID = tmdbid
 					// s.EpisodeCount      = item.EpisodeCount
-					s.SeasonTitle       = item.EnglishName
-					s.SeasonPlot        = item.Description
+					s.SeasonTitle = item.EnglishName
+					s.SeasonPlot = item.Description
 					// s.SeasonNumber      = strconv.Itoa(int(item.SeasonNumber))
-					s.SeasonID          = item.AnimeId
-					s.Episodes          = item.Episodes.Sub
-					s.SeasonRating      = item.Rating
+					s.SeasonID = item.AnimeId
+					s.Episodes = item.Episodes.Sub
+					s.SeasonRating = item.Rating
 
 					myList = append(myList, s)
 				}

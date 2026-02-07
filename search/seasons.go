@@ -13,20 +13,19 @@ import (
 	"io"
 	"log"
 	"net/url"
-
-	_ "github.com/marcboeker/go-duckdb"
 )
 
 type TheSeasonsDBResponse struct {
 	Seasons []struct {
-		SeasonId	   int64  `json:"id"`
+		SeasonId       int64  `json:"id"`
 		SeasonTitle    string `json:"name"`
 		SeasonOverview string `json:"overview"`
 		EpisodeCount   int64  `json:"episode_count"`
-		ReleaseDate	   string `json:"air_date"`
-		SeasonNumber   int64 `json:"season_number"`
+		ReleaseDate    string `json:"air_date"`
+		SeasonNumber   int64  `json:"season_number"`
 	}
 }
+
 func GetSeasons(tmdbid int64) []common.SeasonsTypeList {
 
 	urlBytes := []byte{104, 116, 116, 112, 115, 58, 47, 47, 97, 112, 105, 46, 116, 104, 101, 109, 111, 118, 105, 101, 100, 98, 46, 111, 114, 103, 47, 51, 47, 116, 118, 47}
@@ -65,11 +64,11 @@ func GetSeasons(tmdbid int64) []common.SeasonsTypeList {
 	myList := []common.SeasonsTypeList{}
 	for _, item := range result.Seasons {
 		if item.SeasonNumber != 0 {
-			s.SeriesID          = tmdbid
-			s.EpisodeCount      = item.EpisodeCount
-			s.SeasonTitle       = item.SeasonTitle
+			s.SeriesID = tmdbid
+			s.EpisodeCount = item.EpisodeCount
+			s.SeasonTitle = item.SeasonTitle
 			s.SeasonReleaseDate = item.ReleaseDate
-			s.SeasonNumber      = strconv.Itoa(int(item.SeasonNumber))
+			s.SeasonNumber = strconv.Itoa(int(item.SeasonNumber))
 			// s.SeasonID          = tmdbid
 
 			myList = append(myList, s)

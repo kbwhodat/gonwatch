@@ -7,15 +7,16 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/patrickmn/go-cache"
 )
 
 type IDMappings []struct {
-	AnilistID         int    `json:"anilist_id,omitempty"`
-	ThemoviedbID      any    `json:"themoviedb_id,omitempty"`
-	AnimePlanetID     any    `json:"anime_planet_id,omitempty"`
+	AnilistID     int `json:"anilist_id,omitempty"`
+	ThemoviedbID  any `json:"themoviedb_id,omitempty"`
+	AnimePlanetID any `json:"anime_planet_id,omitempty"`
 }
 
 func getAniListId(mappings IDMappings, tmdbid int64) []int {
@@ -24,12 +25,12 @@ func getAniListId(mappings IDMappings, tmdbid int64) []int {
 
 	for _, item := range mappings {
 		switch v := item.ThemoviedbID.(type) {
-			case float64:
+		case float64:
 			if int(v) == int(tmdbid) {
 				anilistids = append(anilistids, int(item.AnilistID))
 			}
-			case string:
-			if v == string(int(tmdbid)) {
+		case string:
+			if v == strconv.FormatInt(tmdbid, 10) {
 				anilistids = append(anilistids, int(item.AnilistID))
 			}
 		}
@@ -48,7 +49,6 @@ func GetMappings(tmdbid int64) []int {
 	if err := c.Load(file); err != nil {
 		log.Println(err)
 	}
-
 
 	if mappings, found := c.Get("id_mappings"); found {
 		val := mappings.(IDMappings)

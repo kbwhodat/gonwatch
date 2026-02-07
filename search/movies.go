@@ -12,8 +12,6 @@ import (
 	"io"
 	"log"
 	"net/url"
-
-	_ "github.com/marcboeker/go-duckdb"
 )
 
 func GetMovies(text string) []common.VodTypeList {
@@ -54,12 +52,12 @@ func GetMovies(text string) []common.VodTypeList {
 
 	myList := []common.VodTypeList{}
 	for _, item := range result.Results {
-		s.VodID           = item.Id
-		s.VodTmdbID       = item.Id
-		s.VodPlot         = item.Overview
-		s.VodTitle        = item.Title
-		s.VodRating       = item.Rating
-		s.VodReleaseDate  = item.ReleaseDate
+		s.VodID = item.Id
+		s.VodTmdbID = item.Id
+		s.VodPlot = item.Overview
+		s.VodTitle = item.Title
+		s.VodRating = item.Rating
+		s.VodReleaseDate = item.ReleaseDate
 
 		myList = append(myList, s)
 	}

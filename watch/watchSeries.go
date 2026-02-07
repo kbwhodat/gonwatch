@@ -1,41 +1,60 @@
 package watch
 
 import (
-	// "gonwatch/scripts"
-	// "strings"
-	// "log"
-	// "reflect"
+	"log"
 )
 
-func PlayTv(content string, id int64, season_number int64, episode_number int64, title string, animeTitle string) []string {
+func PlayTv(content string, id int64, season_number int64, episode_number int64, title string, animeTitle string, skipSources []string) PlayResult {
 	var anilist_id, anime_episode int
-	// if strings.Contains(title, "JP"){
-	// 	anilist_id, anime_episode = scripts.GetEpisodesFromID(scripts.GetMappings(id), episode_number)
-	// }
-	// log.Println("anilist id is: ", anilist_id)
-	// log.Println("episode id is: ", anime_episode)
 
-	// return []string{}
-
-	urls, subtitles := executePythonTask(content, id, season_number, episode_number, title, anilist_id, anime_episode, "", animeTitle)
-	// urls, subtitles := executePythonTask(content, id, season_number, episode_number, title, anilist_id, anime_episode)
-
-	// url_type := reflect.TypeOf(urls)
-	// log.Println(url_type)
-	// switch url_type.Kind() {
-	// 	case reflect.String:
-	// 		log.Println("Hi i'm a string")
-	// 	case reflect.Array:
-	// 		log.Println("Hi I'm an arrary")
-	// 	case reflect.Slice:
-	// 		log.Println(len(urls))
-	// }
-
-	if len(urls) > 0 {
-		go func() {
-			openMpv(urls, subtitles)
-		}()
+	result, err := executePythonTask(content, id, season_number, episode_number, title, anilist_id, anime_episode, "", animeTitle, skipSources)
+	if err != nil {
+		log.Println("Python task failed:", err)
+		return PlayResult{
+			SourcesTried: skipSources,
+			TotalSources: result.TotalSources,
+			UrlsFound:    false,
+			Error:        err,
+		}
 	}
 
-	return urls
+	newSourcesTried := skipSources
+	if result.SourceUsed != "" {
+		newSourcesTried = append(skipSources, result.SourceUsed)
+	}
+
+	if len(result.Urls) == 0 {
+		return PlayResult{
+			SourceUsed:   result.SourceUsed,
+			SourcesTried: newSourcesTried,
+			TotalSources: result.TotalSources,
+			UrlsFound:    false,
+			Success:      false,
+		}
+	}
+
+	err = openMpv(result.Urls, result.Subtitles)
+	if err != nil {
+		log.Println("MPV playback failed:", err)
+		return PlayResult{
+			Urls:         result.Urls,
+			Subtitles:    result.Subtitles,
+			SourceUsed:   result.SourceUsed,
+			SourcesTried: newSourcesTried,
+			TotalSources: result.TotalSources,
+			UrlsFound:    true,
+			Success:      false,
+			Error:        err,
+		}
+	}
+
+	return PlayResult{
+		Urls:         result.Urls,
+		Subtitles:    result.Subtitles,
+		SourceUsed:   result.SourceUsed,
+		SourcesTried: newSourcesTried,
+		TotalSources: result.TotalSources,
+		UrlsFound:    true,
+		Success:      true,
+	}
 }

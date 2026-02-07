@@ -11,8 +11,6 @@ import (
 	"io"
 	"log"
 	"net/url"
-
-	_ "github.com/marcboeker/go-duckdb"
 )
 
 func GetAnime(text string) []common.AnimeTypeList {
@@ -60,12 +58,12 @@ func GetAnime(text string) []common.AnimeTypeList {
 	myList := []common.AnimeTypeList{}
 	for _, item := range result.Results {
 		if strings.EqualFold(item.Country, "ja") {
-			s.AnimeID          = item.Id
-			s.AnimePlot        = item.Overview
-			s.AnimeTitle       = item.Title
+			s.AnimeID = item.Id
+			s.AnimePlot = item.Overview
+			s.AnimeTitle = item.Title
 			s.AnimeReleaseDate = item.ReleaseDate
-			s.AnimeRating      = item.Rating
-			s.AnimeCountry     = item.Country
+			s.AnimeRating = item.Rating
+			s.AnimeCountry = item.Country
 
 			myList = append(myList, s)
 		}
