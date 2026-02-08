@@ -42,7 +42,6 @@ type PlayResult struct {
 
 func executePythonTask(content string, id int64, season_number int64, episode_number int64, title string, anilist_id int, anime_episode int, sports_url string, anime_title string, skipSources []string) (Result, error) {
 
-	// Create temp directory for Python scripts
 	tmpDir, err := os.MkdirTemp("", "gonwatch-scripts-*")
 	if err != nil {
 		return Result{}, fmt.Errorf("failed to create temp directory: %w", err)
@@ -79,9 +78,9 @@ func executePythonTask(content string, id int64, season_number int64, episode_nu
 
 	cmd := exec.Command("python", cmdArgs...)
 
-	out, err := cmd.Output()
+	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return Result{}, fmt.Errorf("python script failed: %w", err)
+		return Result{}, fmt.Errorf("python script failed: %w\n%s", err, strings.TrimSpace(string(out)))
 	}
 
 	var result Result
