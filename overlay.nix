@@ -1,4 +1,6 @@
 self: super: let
+  isDarwin = super.stdenv.isDarwin;
+
   # Create Python environment with all required packages
   pythonEnv = super.python313.withPackages (ps: with ps; let
     cdp-socket = ps.buildPythonPackage rec {
@@ -37,6 +39,11 @@ self: super: let
     aiofiles
     aiohttp
   ]);
+
+  linuxOnlyBuildInputs = super.lib.optionals (!isDarwin) [ super.chromium ];
+  wrapperPathPackages = [ pythonEnv super.mpv super.nodejs ]
+    ++ super.lib.optionals (!isDarwin) [ super.chromium ];
+
 in {
   gonwatch = super.buildGoModule rec {
     pname = "gonwatch";
@@ -51,12 +58,11 @@ in {
     buildInputs = with super; [
       mpv
       nodejs
-      chromium
-    ];
+    ] ++ linuxOnlyBuildInputs;
 
     postInstall = ''
       wrapProgram $out/bin/gonwatch \
-        --prefix PATH : ${super.lib.makeBinPath [ pythonEnv super.mpv super.nodejs super.chromium ]}
+        --prefix PATH : ${super.lib.makeBinPath wrapperPathPackages}
     '';
 
     meta = with super.lib; {
@@ -64,6 +70,7 @@ in {
       homepage = "https://github.com/kbwhodat/gonwatch";
       license = licenses.asl20;
       maintainers = [ ];
+      platforms = platforms.unix;
     };
   };
 }
