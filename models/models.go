@@ -298,7 +298,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					switch selectedItem.Type() {
 
 					case "movie":
-						log.Println("hello there kind sir")
+						log.Println("")
 
 					case "streams":
 						m.loading = true

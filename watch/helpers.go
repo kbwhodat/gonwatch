@@ -74,14 +74,23 @@ func executePythonTask(content string, id int64, season_number int64, episode_nu
 		anime_title,
 		"--skip-sources", skipArg,
 	}
-	log.Println(cmdArgs)
+	// log.Println(cmdArgs)
 
-	cmd := exec.Command("python", cmdArgs...)
-
-	out, err := cmd.CombinedOutput()
+	pythonPath, err := resolvePythonPath()
 	if err != nil {
-		return Result{}, fmt.Errorf("python script failed: %w\n%s", err, strings.TrimSpace(string(out)))
+		return Result{}, err
 	}
+
+	cmd := exec.Command(pythonPath, cmdArgs...)
+
+	out, err := cmd.Output()
+	if err != nil {
+		return Result{}, fmt.Errorf("python script failed: %w", err)
+	}
+	// out, err := cmd.CombinedOutput()
+	// if err != nil {
+	// 	return Result{}, fmt.Errorf("python script failed: %w\n%s", err, strings.TrimSpace(string(out)))
+	// }
 
 	var result Result
 	if err := json.Unmarshal(out, &result); err != nil {
@@ -98,6 +107,32 @@ func executePythonTask(content string, id int64, season_number int64, episode_nu
 	}
 
 	return result, nil
+}
+
+func resolvePythonPath() (string, error) {
+	if custom := os.Getenv("GONWATCH_PYTHON"); custom != "" {
+		if _, err := os.Stat(custom); err == nil {
+			return custom, nil
+		}
+		return "", fmt.Errorf("GONWATCH_PYTHON not found: %s", custom)
+	}
+
+	home, err := os.UserHomeDir()
+	if err == nil {
+		venvPython := filepath.Join(home, ".local", "share", "gonwatch", "venv", "bin", "python")
+		if _, err := os.Stat(venvPython); err == nil {
+			return venvPython, nil
+		}
+	}
+
+	if path, err := exec.LookPath("python3"); err == nil {
+		return path, nil
+	}
+	if path, err := exec.LookPath("python"); err == nil {
+		return path, nil
+	}
+
+	return "", fmt.Errorf("python not found. Install python3 or set GONWATCH_PYTHON")
 }
 
 func openMpv(urls []string, subtitles []string) error {

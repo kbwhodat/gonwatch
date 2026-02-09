@@ -28,9 +28,20 @@ MIN_GO_VERSION="1.22"
 PYTHON_PACKAGES=(
     "selenium-driverless>=1.9.4"
     "requests"
+    "numpy"
+    "matplotlib"
+    "scipy"
+    "platformdirs"
+    "jsondiff"
+    "orjson"
     "langdetect"
     "beautifulsoup4"
     "tls_client"
+    "selenium"
+    "cdp-socket"
+    "websockets"
+    "aiofiles"
+    "aiohttp"
 )
 
 # Colors (disabled if not a TTY)
@@ -391,34 +402,37 @@ install_python() {
 
 install_python_packages() {
     log_step "Installing Python packages..."
-    
-    local pip_cmd
-    if command_exists pip3; then
-        pip_cmd="pip3"
-    elif command_exists pip; then
-        pip_cmd="pip"
-    else
-        log_warn "pip not found. Trying python3 -m pip..."
-        pip_cmd="python3 -m pip"
-    fi
-    
-    # Install packages
-    log_info "Installing: ${PYTHON_PACKAGES[*]}"
-    
-    if $pip_cmd install --user "${PYTHON_PACKAGES[@]}" 2>/dev/null; then
-        log_success "Python packages installed successfully"
-    elif $pip_cmd install "${PYTHON_PACKAGES[@]}" 2>/dev/null; then
-        log_success "Python packages installed successfully"
-    else
-        # Try with --break-system-packages for newer pip versions
-        log_info "Retrying with --break-system-packages flag..."
-        if $pip_cmd install --user --break-system-packages "${PYTHON_PACKAGES[@]}" 2>/dev/null; then
-            log_success "Python packages installed successfully"
+
+    local venv_dir="${HOME}/.local/share/gonwatch/venv"
+    local venv_python="${venv_dir}/bin/python"
+
+    mkdir -p "${HOME}/.local/share/gonwatch"
+
+    if [[ ! -x "$venv_python" ]]; then
+        log_info "Creating venv at ${venv_dir}"
+        if command_exists python3; then
+            python3 -m venv "$venv_dir" || return 1
+        elif command_exists python; then
+            python -m venv "$venv_dir" || return 1
         else
-            log_warn "Could not install Python packages automatically."
-            log_info "Please run manually: $pip_cmd install ${PYTHON_PACKAGES[*]}"
+            log_warn "Python not found for venv creation"
             return 1
         fi
+    fi
+
+    log_info "Upgrading pip in venv"
+    "$venv_python" -m pip install --upgrade pip >/dev/null 2>&1 || true
+
+    # Install packages
+    log_info "Installing: ${PYTHON_PACKAGES[*]}"
+
+    if "$venv_python" -m pip install "${PYTHON_PACKAGES[@]}" 2>/dev/null; then
+        log_success "Python packages installed successfully"
+        log_info "Venv location: ${venv_dir}"
+    else
+        log_warn "Could not install Python packages automatically."
+        log_info "Please run manually: ${venv_python} -m pip install ${PYTHON_PACKAGES[*]}"
+        return 1
     fi
 }
 
