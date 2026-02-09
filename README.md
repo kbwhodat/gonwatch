@@ -6,17 +6,30 @@ A golang tui app that allows you to watch whatever.
 - Movies
 - TV Series
 - Anime
-- Live Sports
+- Live Sports (highly unpredictable). Source damn-near added DRM-protection (good for them I guess)
 
-For movies and tv series it comes with subtitles inlcuded. If there is none available, a call is made to [opensubtitles](https://www.opensubtitles.org/en/search/subs). So, you might have to ensure the audio and captioning are in sync (rarely).
+For movies and tv series it comes with subtitles included. Currently, I'm only fetching for english subtitles. If you want other languages let me know and I can add it.
+
+### How to install this bad boy?
+```bash
+    curl -fsSL https://raw.githubusercontent.com/kbwhodat/gonwatch/main/install.sh | bash
+```
+FYI: For the python package dependencies I'm using venv, so no need to worry about it colliding with your system packages.
+
+Works for multiple Linux distros and Macos. Sorry Window users.
+
+#### If you have nix and just want to test it out:
+```bash
+    nix run githb:kbwhodat/gonwatch
+```
+
+#### If you use nix flakes (recommended):
+```
+    inputs.gonwatch.url = "github:kbwhodat/gonwatch/main";
+```
 
 #### Features
 If there are anything you think should be added let it be known.
-
-#### Python runtime
-The app runs embedded Python scripts for scraping. The installer creates a local venv at `~/.local/share/gonwatch/venv` and the app will use that by default.
-
-If you want to override the interpreter, set `GONWATCH_PYTHON` to a full path (e.g. a custom venv Python).
 
 #### Issues
 If you face any issues using this, let it be known so it can be fixed.
