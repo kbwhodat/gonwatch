@@ -855,53 +855,6 @@ install_with_go_install() {
     log_success "Installed $BINARY_NAME to $install_dir"
 }
 
-# ============================================================================
-# Setup Shell Completion
-# ============================================================================
-
-setup_completions() {
-    local os="$1"
-    local shell_name
-    shell_name=$(basename "${SHELL:-/bin/bash}")
-    
-    log_step "Setting up shell completions..."
-    
-    # Check if gonwatch supports completions
-    if ! "$BINARY_NAME" completion "$shell_name" &>/dev/null 2>&1; then
-        log_info "Shell completions not available for this build"
-        return 0
-    fi
-    
-    case "$shell_name" in
-        bash)
-            local completion_dir
-            if [[ "$os" == "darwin" ]]; then
-                completion_dir="$(brew --prefix 2>/dev/null)/etc/bash_completion.d" || completion_dir="$HOME/.bash_completion.d"
-            else
-                completion_dir="${XDG_DATA_HOME:-$HOME/.local/share}/bash-completion/completions"
-            fi
-            mkdir -p "$completion_dir"
-            "$BINARY_NAME" completion bash > "$completion_dir/$BINARY_NAME"
-            log_success "Bash completions installed to $completion_dir"
-            ;;
-        zsh)
-            local completion_dir="${ZDOTDIR:-$HOME}/.zfunc"
-            mkdir -p "$completion_dir"
-            "$BINARY_NAME" completion zsh > "$completion_dir/_$BINARY_NAME"
-            log_success "Zsh completions installed to $completion_dir"
-            log_info "Add 'fpath+=~/.zfunc' to your .zshrc if not already present"
-            ;;
-        fish)
-            local completion_dir="${XDG_CONFIG_HOME:-$HOME/.config}/fish/completions"
-            mkdir -p "$completion_dir"
-            "$BINARY_NAME" completion fish > "$completion_dir/$BINARY_NAME.fish"
-            log_success "Fish completions installed to $completion_dir"
-            ;;
-        *)
-            log_info "Shell completions not configured for $shell_name"
-            ;;
-    esac
-}
 
 # ============================================================================
 # Post-Installation
@@ -1184,9 +1137,6 @@ main() {
     export PATH="$PATH:$install_dir"
     
     verify_installation "$install_dir"
-    
-    # Setup completions (optional, don't fail if it doesn't work)
-    setup_completions "$os" 2>/dev/null || true
     
     print_post_install_info "$install_dir" "$os"
 }
