@@ -1,14 +1,22 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
-	"gonwatch/models"
-	tea "github.com/charmbracelet/bubbletea"
 
+	tea "github.com/charmbracelet/bubbletea"
+	"gonwatch/models"
 )
 
+var version = "1.0.0"
+
 func main() {
+	if len(os.Args) > 1 && os.Args[1] == "--version" {
+		fmt.Println(version)
+		return
+	}
+
 	// Initialize debug mode if requested
 	if len(os.Args) > 1 && os.Args[1] == "debug" {
 		f, err := tea.LogToFile("/tmp/debug.log", "debug")
