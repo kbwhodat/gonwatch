@@ -347,6 +347,59 @@ install_mpv() {
     log_success "mpv installed successfully"
 }
 
+install_streamlink() {
+    local os="$1"
+    local pkg_manager="$2"
+
+    log_step "Installing streamlink (for some streams)..."
+
+    case "$pkg_manager" in
+        apt)
+            sudo apt-get install -y streamlink
+            ;;
+        dnf|yum)
+            sudo $pkg_manager install -y streamlink
+            ;;
+        pacman)
+            sudo pacman -Sy --noconfirm streamlink
+            ;;
+        apk)
+            sudo apk add --no-cache streamlink
+            ;;
+        zypper)
+            sudo zypper install -y streamlink
+            ;;
+        brew)
+            brew install streamlink
+            ;;
+        choco)
+            choco install streamlink -y
+            ;;
+        scoop)
+            scoop install streamlink
+            ;;
+        winget)
+            winget install -e --id Streamlink.Streamlink
+            ;;
+        nix)
+            nix-env -iA nixpkgs.streamlink
+            ;;
+        xbps)
+            sudo xbps-install -Sy streamlink
+            ;;
+        emerge)
+            sudo emerge --ask=n net-misc/streamlink
+            ;;
+        *)
+            log_warn "Could not auto-install streamlink."
+            log_info "streamlink is required for some streams."
+            return 1
+            ;;
+    esac
+
+    log_success "streamlink installed successfully"
+}
+
 install_python() {
     local os="$1"
     local pkg_manager="$2"
@@ -967,6 +1020,7 @@ main() {
     
     local need_go=false
     local need_mpv=false
+    local need_streamlink=false
     local need_git=false
     local need_python=false
     local need_nodejs=false
@@ -1042,11 +1096,19 @@ main() {
     else
         log_success "mpv found: $(mpv --version | head -1)"
     fi
+
+    # Check streamlink
+    if ! command_exists streamlink; then
+        need_streamlink=true
+        log_warn "streamlink not found (required for some streams)"
+    else
+        log_success "streamlink found: $(streamlink --version 2>/dev/null | head -1)"
+    fi
     
     echo ""
     
     # =========== Install Missing Dependencies ===========
-    if $need_git || $need_go || $need_python || $need_nodejs || $need_chromium || $need_mpv || $need_pip_packages; then
+    if $need_git || $need_go || $need_python || $need_nodejs || $need_chromium || $need_mpv || $need_streamlink || $need_pip_packages; then
         log_step "Installing missing dependencies..."
         
         if [[ "$pkg_manager" == "none" ]]; then
@@ -1058,6 +1120,7 @@ main() {
             $need_nodejs && echo "  - Node.js"
             $need_chromium && echo "  - Google Chrome or Chromium"
             $need_mpv && echo "  - mpv"
+            $need_streamlink && echo "  - streamlink"
             $need_pip_packages && echo "  - Python packages: ${PYTHON_PACKAGES[*]}"
             echo ""
             
@@ -1094,6 +1157,9 @@ main() {
             
             if $need_mpv; then
                 install_mpv "$os" "$pkg_manager" || true  # Don't fail if mpv install fails
+            fi
+            if $need_streamlink; then
+                install_streamlink "$os" "$pkg_manager" || true  # Don't fail if streamlink install fails
             fi
         fi
         
@@ -1153,6 +1219,7 @@ OPTIONS:
 DEPENDENCIES:
     Required:
       - mpv           Video player for playback
+      - streamlink    Required for some streams
       - python3       Runs scraping scripts
       - Chrome/Chromium  Headless browser for scraping
       - pip packages  selenium-driverless, requests, langdetect, beautifulsoup4, tls_client
@@ -1194,6 +1261,7 @@ EOF
         command_exists google-chrome || command_exists chromium || command_exists chromium-browser || \
             install_chromium "$os" "$pkg_manager" || true
         command_exists mpv || install_mpv "$os" "$pkg_manager"
+        command_exists streamlink || install_streamlink "$os" "$pkg_manager"
         
         log_success "Dependencies installed"
         exit 0
@@ -1228,6 +1296,7 @@ EOF
         command_exists google-chrome || command_exists chromium || command_exists chromium-browser || \
             install_chromium "$os" "$pkg_manager" || true
         command_exists mpv || install_mpv "$os" "$pkg_manager" || true
+        command_exists streamlink || install_streamlink "$os" "$pkg_manager" || true
         
         export PATH="$PATH:/usr/local/go/bin:$HOME/go/bin"
         

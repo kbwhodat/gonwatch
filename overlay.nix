@@ -48,7 +48,7 @@ self: super: let
   ]);
 
   linuxOnlyBuildInputs = super.lib.optionals (!isDarwin) [ super.chromium ];
-  wrapperPathPackages = [ pythonEnv super.mpv super.nodejs ]
+  wrapperPathPackages = [ pythonEnv super.mpv super.nodejs super.streamlink ]
     ++ super.lib.optionals (!isDarwin) [ super.chromium ];
 
 in {
