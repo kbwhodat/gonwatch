@@ -204,7 +204,6 @@ install_go() {
     
     case "$pkg_manager" in
         apt)
-            sudo apt-get update
             sudo apt-get install -y golang-go || {
                 # Fallback: install from official tarball for newer version
                 install_go_from_tarball "$os"
@@ -293,7 +292,6 @@ install_mpv() {
     
     case "$pkg_manager" in
         apt)
-            sudo apt-get update
             sudo apt-get install -y mpv
             ;;
         dnf|yum)
@@ -408,7 +406,6 @@ install_python() {
     
     case "$pkg_manager" in
         apt)
-            sudo apt-get update
             sudo apt-get install -y python3 python3-pip python3-venv
             ;;
         dnf|yum)
@@ -497,7 +494,6 @@ install_nodejs() {
     
     case "$pkg_manager" in
         apt)
-            sudo apt-get update
             sudo apt-get install -y nodejs npm || {
                 # Fallback to NodeSource
                 log_info "Installing from NodeSource..."
@@ -564,7 +560,6 @@ install_chromium() {
     
     case "$pkg_manager" in
         apt)
-            sudo apt-get update
             sudo apt-get install -y chromium-browser || sudo apt-get install -y chromium
             ;;
         dnf)
@@ -622,7 +617,6 @@ install_git() {
     
     case "$pkg_manager" in
         apt)
-            sudo apt-get update
             sudo apt-get install -y git
             ;;
         dnf|yum)
