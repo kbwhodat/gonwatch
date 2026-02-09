@@ -30,9 +30,16 @@ self: super: let
     };
   in [
     requests
+    numpy
+    matplotlib
+    scipy
+    platformdirs
+    jsondiff
+    orjson
     beautifulsoup4
     langdetect
     tls-client
+    selenium
     selenium-driverless
     cdp-socket
     websockets
