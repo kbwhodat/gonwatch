@@ -6,7 +6,7 @@ A golang tui app that allows you to watch whatever.
 - Movies
 - TV Series
 - Anime
-- Live Sports (highly unpredictable). Source damn-near added DRM-protection (good for them I guess)
+- Live Sports
 
 For movies and tv series it comes with subtitles included. Currently, I'm only fetching for english subtitles. If you want other languages let me know and I can add it.
 

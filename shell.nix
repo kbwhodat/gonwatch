@@ -4,6 +4,7 @@ pkgs.mkShell {
   packages = with pkgs; [
     # streamlink
     gcc
+    curl-impersonate-chrome
     python313Packages.python
     python313Packages.tls-client
     python313Packages.beautifulsoup4

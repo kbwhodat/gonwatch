@@ -398,6 +398,33 @@ install_streamlink() {
     log_success "streamlink installed successfully"
 }
 
+install_curl_impersonate() {
+    local os="$1"
+    local pkg_manager="$2"
+
+    log_step "Installing curl-impersonate (for sports streams)..."
+
+    case "$pkg_manager" in
+        pacman)
+            sudo pacman -Sy --noconfirm curl-impersonate
+            ;;
+        brew)
+            brew tap shakacode/brew
+            brew install curl-impersonate
+            ;;
+        nix)
+            nix-env -iA nixpkgs.curl-impersonate-chrome
+            ;;
+        *)
+            log_warn "curl-impersonate not available via $pkg_manager"
+            log_warn "Sports streams may be unreliable without it"
+            return 1
+            ;;
+    esac
+
+    log_success "curl-impersonate installed successfully"
+}
+
 install_python() {
     local os="$1"
     local pkg_manager="$2"
@@ -968,6 +995,7 @@ main() {
     local need_go=false
     local need_mpv=false
     local need_streamlink=false
+    local need_curl_impersonate=false
     local need_git=false
     local need_python=false
     local need_nodejs=false
@@ -1051,11 +1079,19 @@ main() {
     else
         log_success "streamlink found: $(streamlink --version 2>/dev/null | head -1)"
     fi
+
+    # Check curl-impersonate
+    if ! command_exists curl-impersonate; then
+        need_curl_impersonate=true
+        log_warn "curl-impersonate not found (sports streams may be unreliable)"
+    else
+        log_success "curl-impersonate found"
+    fi
     
     echo ""
     
     # =========== Install Missing Dependencies ===========
-    if $need_git || $need_go || $need_python || $need_nodejs || $need_chromium || $need_mpv || $need_streamlink || $need_pip_packages; then
+    if $need_git || $need_go || $need_python || $need_nodejs || $need_chromium || $need_mpv || $need_streamlink || $need_curl_impersonate || $need_pip_packages; then
         log_step "Installing missing dependencies..."
         
         if [[ "$pkg_manager" == "none" ]]; then
@@ -1068,6 +1104,7 @@ main() {
             $need_chromium && echo "  - Google Chrome or Chromium"
             $need_mpv && echo "  - mpv"
             $need_streamlink && echo "  - streamlink"
+            $need_curl_impersonate && echo "  - curl-impersonate (sports streams)"
             $need_pip_packages && echo "  - Python packages: ${PYTHON_PACKAGES[*]}"
             echo ""
             
@@ -1107,6 +1144,9 @@ main() {
             fi
             if $need_streamlink; then
                 install_streamlink "$os" "$pkg_manager" || true  # Don't fail if streamlink install fails
+            fi
+            if $need_curl_impersonate; then
+                install_curl_impersonate "$os" "$pkg_manager" || true  # Warn if unavailable
             fi
         fi
         
@@ -1164,6 +1204,7 @@ DEPENDENCIES:
     Required:
       - mpv           Video player for playback
       - streamlink    Required for some streams
+      - curl-impersonate  Improves sports stream reliability
       - python3       Runs scraping scripts
       - Chrome/Chromium  Headless browser for scraping
       - pip packages  selenium-driverless, requests, langdetect, beautifulsoup4, tls_client
@@ -1206,6 +1247,7 @@ EOF
             install_chromium "$os" "$pkg_manager" || true
         command_exists mpv || install_mpv "$os" "$pkg_manager"
         command_exists streamlink || install_streamlink "$os" "$pkg_manager"
+        command_exists curl-impersonate || install_curl_impersonate "$os" "$pkg_manager" || true
         
         log_success "Dependencies installed"
         exit 0
@@ -1241,6 +1283,7 @@ EOF
             install_chromium "$os" "$pkg_manager" || true
         command_exists mpv || install_mpv "$os" "$pkg_manager" || true
         command_exists streamlink || install_streamlink "$os" "$pkg_manager" || true
+        command_exists curl-impersonate || install_curl_impersonate "$os" "$pkg_manager" || true
         
         export PATH="$PATH:/usr/local/go/bin:$HOME/go/bin"
         

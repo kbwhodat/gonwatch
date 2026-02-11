@@ -7,7 +7,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -21,6 +20,9 @@ var setcookiesPy string
 
 //go:embed scripts/pahe.py
 var pahePy string
+
+//go:embed scripts/stream-impersonate.sh
+var streamImpersonateSh string
 
 type Result struct {
 	Urls         []string `json:"urls"`
@@ -48,7 +50,6 @@ func executePythonTask(content string, id int64, season_number int64, episode_nu
 	}
 	defer os.RemoveAll(tmpDir)
 
-	// Write embedded Python scripts to temp directory
 	pahePath := filepath.Join(tmpDir, "pahe.py")
 	if err := os.WriteFile(pahePath, []byte(pahePy), 0644); err != nil {
 		return Result{}, fmt.Errorf("failed to write pahe.py: %w", err)
@@ -161,6 +162,7 @@ func openMpv(urls []string, subtitles []string) error {
 
 	var lastErr error
 	for _, host := range urls {
+
 		if strings.Contains(host, "_v7") {
 			cmdArgs = []string{"--cache", "--cache-secs=5", "--demuxer-readahead-secs=5", "--demuxer-lavf-o=fflags=+genpts", "--no-audio-pitch-correction", "--video-sync=audio", "--stream-lavf-o=reconnect=1", "--stream-lavf-o=reconnect_streamed=1", "--stream-lavf-o=reconnect_delay_max=5", "--stream-lavf-o=reconnect_on_http_error=1", "--stream-lavf-o=reconnect_on_network_error=1", "--fullscreen", "--save-position-on-quit", "--slang=en,eng", "--http-header-fields=Referer: https://rapid-cloud.co/", host}
 
@@ -179,39 +181,20 @@ func openMpv(urls []string, subtitles []string) error {
 		} else if strings.Contains(host, "lightningbolt") {
 			cmdArgs = []string{"--cache", "--cache-secs=5", "--demuxer-readahead-secs=5", "--demuxer-lavf-o=fflags=+genpts", "--no-audio-pitch-correction", "--video-sync=audio", "--stream-lavf-o=reconnect=1", "--stream-lavf-o=reconnect_streamed=1", "--stream-lavf-o=reconnect_delay_max=5", "--stream-lavf-o=reconnect_on_http_error=1", "--stream-lavf-o=reconnect_on_network_error=1", "--fullscreen", "--save-position-on-quit", "--slang=en,eng", "--http-header-fields=Referer: https://vidsrc.cc/", host}
 
-		} else if strings.Contains(host, "embedsports.top") || strings.Contains(host, "strmd.top") || strings.Contains(host, "poocloud.in") || strings.Contains(host, "vdcast.live") {
-			if streamlink == "" {
-				lastErr = fmt.Errorf("streamlink required for this source but not found")
-				continue
-			}
-			cmdArgs = []string{"--retry-open", "5", "--retry-streams", "5", "--stream-segment-attempts", "5", "--stream-segment-timeout", "10", "--player-continuous-http",
-				"--http-no-ssl-verify", "--http-header", "Referer=https://embedsports.top/", host, "best", "-p", mpv, "-a", "--network-timeout=60 --stream-lavf-o=reconnect=1,reconnect_streamed=1,reconnect_delay_max=5"}
-
-		} else if strings.Contains(host, "storm") || strings.Contains(host, "rainflare") {
-			type Headers struct {
-				Referer string `json:"referer"`
-				Origin  string `json:"origin"`
-			}
-
-			u, err := url.Parse(host)
+		} else if strings.Contains(host, "strmd.top") {
+			err := openMpvWithCurlImpersonate(host)
 			if err != nil {
-				lastErr = fmt.Errorf("unable to parse URL: %w", err)
-				continue
+				return fmt.Errorf("unable to play stream: %w", err)
 			}
+			return nil
 
-			q := u.Query()
+		} else if strings.Contains(host, "embedsports.top") || strings.Contains(host, "poocloud.in") || strings.Contains(host, "vdcast.live") {
 
-			headersRaw := q.Get("headers")
+			cmdArgs = []string{"--retry-open", "5", "--retry-streams", "5", "--stream-segment-attempts", "5", "--stream-segment-timeout", "10", "--player-continuous-http",
+				"--http-no-ssl-verify", "--http-header", "Referer=https://embedsports.top/", host, "best", "-p", mpv, "-a", "--network-timeout=60 --stream-lavf-o=reconnect=1,reconnect_streamed=1,reconnect_delay_max=5 --fullscreen"}
 
-			var h Headers
-			if err := json.Unmarshal([]byte(headersRaw), &h); err != nil {
-				lastErr = fmt.Errorf("failed to parse headers: %w", err)
-				continue
-			}
-
-			new_url := strings.Replace(host, "https://storm.vodvidl.site/proxy", q.Get("host"), 1)
-
-			cmdArgs = []string{"--cache", "--cache-secs=5", "--demuxer-readahead-secs=5", "--demuxer-lavf-o=fflags=+genpts", "--no-audio-pitch-correction", "--video-sync=audio", "--stream-lavf-o=reconnect=1", "--stream-lavf-o=reconnect_streamed=1", "--stream-lavf-o=reconnect_delay_max=5", "--stream-lavf-o=reconnect_on_http_error=1", "--stream-lavf-o=reconnect_on_network_error=1", "--fullscreen", "--save-position-on-quit", "--slang=en,eng", "--http-header-fields=Referer: " + h.Referer, new_url}
+		} else if strings.Contains(host, "storm") {
+			cmdArgs = []string{"--cache", "--cache-secs=5", "--demuxer-readahead-secs=5", "--demuxer-lavf-o=fflags=+genpts", "--no-audio-pitch-correction", "--video-sync=audio", "--stream-lavf-o=reconnect=1", "--stream-lavf-o=reconnect_streamed=1", "--stream-lavf-o=reconnect_delay_max=5", "--stream-lavf-o=reconnect_on_http_error=1", "--stream-lavf-o=reconnect_on_network_error=1", "--fullscreen", "--save-position-on-quit", "--slang=en,eng", "--http-header-fields=Referer: https://vidlink.pro/", "--ytdl-raw-options=impersonate=Chrome-131:Android-14,add-header=Referer:https://vidlink.pro/", host}
 
 		} else {
 			cmdArgs = []string{"--cache", "--cache-secs=5", "--demuxer-readahead-secs=5", "--demuxer-lavf-o=fflags=+genpts", "--no-audio-pitch-correction", "--video-sync=audio", "--stream-lavf-o=reconnect=1", "--stream-lavf-o=reconnect_streamed=1", "--stream-lavf-o=reconnect_delay_max=5", "--stream-lavf-o=reconnect_on_http_error=1", "--stream-lavf-o=reconnect_on_network_error=1", "--fullscreen", "--save-position-on-quit", "--slang=en,eng", host}
@@ -263,6 +246,67 @@ func openMpv(urls []string, subtitles []string) error {
 		return lastErr
 	}
 	return fmt.Errorf("all URLs failed to play")
+}
+
+func openMpvWithCurlImpersonate(m3u8URL string) error {
+	tmpDir, err := os.MkdirTemp("", "gonwatch-stream-*")
+	if err != nil {
+		return fmt.Errorf("failed to create temp directory: %w", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	scriptPath := filepath.Join(tmpDir, "stream-impersonate.sh")
+	if err := os.WriteFile(scriptPath, []byte(streamImpersonateSh), 0755); err != nil {
+		return fmt.Errorf("failed to write stream-impersonate.sh: %w", err)
+	}
+
+	mpv, err := exec.LookPath("mpv")
+	if err != nil {
+		return fmt.Errorf("mpv not found: %w", err)
+	}
+
+	bashCmd := exec.Command("bash", scriptPath, m3u8URL)
+	mpvCmd := exec.Command(mpv,
+		"--no-cache",
+		"--demuxer-max-bytes=50M",
+		"--demuxer-readahead-secs=10",
+		"--fullscreen",
+		"--force-seekable=no",
+		"-",
+	)
+
+	log.Println(m3u8URL)
+	log.Println(bashCmd)
+
+	pipe, err := bashCmd.StdoutPipe()
+	if err != nil {
+		return fmt.Errorf("failed to create pipe: %w", err)
+	}
+	mpvCmd.Stdin = pipe
+
+	if err := bashCmd.Start(); err != nil {
+		return fmt.Errorf("failed to start stream script: %w", err)
+	}
+	if err := mpvCmd.Start(); err != nil {
+		bashCmd.Process.Kill()
+		return fmt.Errorf("failed to start mpv: %w", err)
+	}
+
+	done := make(chan error, 1)
+	go func() {
+		done <- mpvCmd.Wait()
+	}()
+
+	select {
+	case err := <-done:
+		bashCmd.Process.Kill()
+		if err != nil {
+			return fmt.Errorf("mpv exited with error: %w", err)
+		}
+		return nil
+	case <-time.After(5 * time.Second):
+		return nil
+	}
 }
 
 type SubtitlesResponse []struct {
