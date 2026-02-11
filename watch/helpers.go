@@ -275,8 +275,8 @@ func openMpvWithCurlImpersonate(m3u8URL string) error {
 		"-",
 	)
 
-	log.Println(m3u8URL)
-	log.Println(bashCmd)
+	// log.Println(m3u8URL)
+	// log.Println(bashCmd)
 
 	pipe, err := bashCmd.StdoutPipe()
 	if err != nil {

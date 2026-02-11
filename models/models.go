@@ -24,7 +24,7 @@ var (
 	helpStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
 )
 
-var sportGenres = []string{"basketball", "football", "american-football", "hockey", "baseball", "motor-sports", "fight", "tennis", "rugby", "golf", "billiards", "afl", "darts", "cricket", "other"}
+var sportGenres = []string{"basketball", "olympics", "football", "american-football", "hockey", "baseball", "motor-sports", "fight", "tennis", "rugby", "golf", "billiards", "afl", "darts", "cricket", "other"}
 
 type Model struct {
 	TextInput      textinput.Model
