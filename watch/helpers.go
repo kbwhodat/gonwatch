@@ -167,6 +167,9 @@ func openMpv(urls []string, subtitles []string) error {
 		} else if strings.Contains(host, "tools.fast4speed.rsvp") {
 			cmdArgs = []string{"--cache", "--cache-secs=5", "--demuxer-readahead-secs=5", "--demuxer-lavf-o=fflags=+genpts", "--no-audio-pitch-correction", "--video-sync=audio", "--stream-lavf-o=reconnect=1", "--stream-lavf-o=reconnect_streamed=1", "--stream-lavf-o=reconnect_delay_max=5", "--stream-lavf-o=reconnect_on_http_error=1", "--stream-lavf-o=reconnect_on_network_error=1", "--fullscreen", "--save-position-on-quit", "--slang=en,eng", "--http-header-fields=Referer: https://allmanga.to/", host}
 
+		} else if strings.Contains(host, "one.techparadise") {
+			cmdArgs = []string{"--cache", "--cache-secs=5", "--demuxer-readahead-secs=5", "--demuxer-lavf-o=fflags=+genpts", "--no-audio-pitch-correction", "--video-sync=audio", "--stream-lavf-o=reconnect=1", "--stream-lavf-o=reconnect_streamed=1", "--stream-lavf-o=reconnect_delay_max=5", "--stream-lavf-o=reconnect_on_http_error=1", "--stream-lavf-o=reconnect_on_network_error=1", "--fullscreen", "--save-position-on-quit", "--slang=en,eng", "--http-header-fields=Referer: https://player.videasy.net/", host}
+
 		} else if strings.Contains(host, "owocdn.top") || strings.Contains(host, "uwucdn.top") {
 			cmdArgs = []string{"--cache", "--cache-secs=5", "--demuxer-readahead-secs=5", "--demuxer-lavf-o=fflags=+genpts", "--no-audio-pitch-correction", "--video-sync=audio", "--stream-lavf-o=reconnect=1", "--stream-lavf-o=reconnect_streamed=1", "--stream-lavf-o=reconnect_delay_max=5", "--stream-lavf-o=reconnect_on_http_error=1", "--stream-lavf-o=reconnect_on_network_error=1", "--fullscreen", "--save-position-on-quit", "--slang=en,eng", "--http-header-fields=Referer: https://kwik.cx/", host}
 
@@ -184,7 +187,7 @@ func openMpv(urls []string, subtitles []string) error {
 			cmdArgs = []string{"--retry-open", "5", "--retry-streams", "5", "--stream-segment-attempts", "5", "--stream-segment-timeout", "10", "--player-continuous-http",
 				"--http-no-ssl-verify", "--http-header", "Referer=https://embedsports.top/", host, "best", "-p", mpv, "-a", "--network-timeout=60 --stream-lavf-o=reconnect=1,reconnect_streamed=1,reconnect_delay_max=5"}
 
-		} else if strings.Contains(host, "storm") {
+		} else if strings.Contains(host, "storm") || strings.Contains(host, "rainflare") {
 			type Headers struct {
 				Referer string `json:"referer"`
 				Origin  string `json:"origin"`

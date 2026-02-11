@@ -16,7 +16,7 @@ USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, li
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
-SOURCES_TV_MOVIE = ["vidlink", "vidsrc", "vidnest", "vidsrc_embed", "hexa"]
+SOURCES_TV_MOVIE = ["videasy", "vidsrc", "vidnest", "vidsrc_embed", "hexa"]
 SOURCES_ANIME = ["animepahe", "heavenscape", "allmanga"]
 SOURCES_STREAM = ["stream"]
 
@@ -226,16 +226,24 @@ async def main() -> str:
             result = json.dumps({"urls": urls, "subtitles": subtitles, "source_used": source_used, "total_sources": len(SOURCES_ANIME)})
             return result
 
-        if "vidlink" not in skip_list:
-            source_used = "vidlink"
+        if "videasy" not in skip_list:
+            source_used = "videasy"
             await driver.add_cdp_listener("Network.responseReceived", on_response)
             if args.content == "tv":
-                url_bytes = bytes([104, 116, 116, 112, 115, 58, 47, 47, 118, 105, 100, 108, 105, 110, 107, 46, 112, 114, 111, 47, 116, 118, 47])
+
+                url_bytes = bytes([104, 116, 116, 112, 115, 58, 47, 47, 112, 108, 97, 121, 101, 114, 46, 118, 105, 100, 101, 97, 115, 121, 46, 110, 101, 116, 47, 116, 118, 47])
                 await driver.get(url_bytes.decode() + f"{args.id}/{args.season}/{args.episode}", wait_load=True)
             else:
-                url_bytes = bytes([104, 116, 116, 112, 115, 58, 47, 47, 118, 105, 100, 108, 105, 110, 107, 46, 112, 114, 111, 47, 109, 111, 118, 105, 101, 47])
+                url_bytes = bytes([104, 116, 116, 112, 115, 58, 47, 47, 112, 108, 97, 121, 101, 114, 46, 118, 105, 100, 101, 97, 115, 121, 46, 110, 101, 116, 47, 116, 118, 47])
                 await driver.get(url_bytes.decode() + f"{args.id}", wait_load=True)
             await driver.sleep(5)
+
+            overlay = await driver.find_elements(By.CSS_SELECTOR, "button svg.play-icon-main", timeout=3)
+            if overlay:
+                btn = await overlay[0].find_element(By.XPATH, "./ancestor::button")
+                await btn.click()
+            play_btn = await driver.find_element(By.ID, "ButtonPlay", timeout=5)
+            await play_btn.click()
             await driver.remove_cdp_listener("Network.responseReceived", on_response)
 
         if len(urls) == 0 and "vidsrc" not in skip_list:
