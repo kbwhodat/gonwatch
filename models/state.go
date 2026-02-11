@@ -9,6 +9,7 @@ type ModelStateSnapshot struct {
 	TextInputState textinput.Model
 	ListState      list.Model
 	Mode           string
+	Cursor         int
 }
 
 func (m *Model) restorePreviousState() *Model {
@@ -23,6 +24,7 @@ func (m *Model) restorePreviousState() *Model {
 	m.TextInput = prevState.TextInputState
 	m.List = prevState.ListState
 	m.Mode = prevState.Mode
+	m.Cursor = prevState.Cursor
 
 	if m.width > 0 && m.height > 0 {
 		m.List.SetSize(m.width-2, m.height-2)
@@ -36,6 +38,7 @@ func (m *Model) saveCurrentState() {
 		TextInputState: m.TextInput,
 		ListState:      m.List,
 		Mode:           m.Mode,
+		Cursor:         m.Cursor,
 	}
 	m.PreviousStates = append(m.PreviousStates, snapshot)
 }

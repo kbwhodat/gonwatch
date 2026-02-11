@@ -56,6 +56,10 @@ type Model struct {
 
 	width  int
 	height int
+
+	searchHistory      []string
+	searchHistoryIndex int
+	searchHistoryDraft string
 }
 
 type ListItem interface {
@@ -280,6 +284,21 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 
 		case "down", "j":
+			if m.Mode == "input" {
+				if keyMsg.String() == "j" {
+					break
+				}
+				if m.searchHistoryIndex > -1 {
+					m.searchHistoryIndex--
+					if m.searchHistoryIndex == -1 {
+						m.TextInput.SetValue(m.searchHistoryDraft)
+					} else {
+						m.TextInput.SetValue(m.searchHistory[m.searchHistoryIndex])
+					}
+					m.TextInput.CursorEnd()
+				}
+				return m, nil
+			}
 			m.Cursor++
 			if m.Mode == "trending" {
 				if m.Cursor >= len(TrendingChoiceList) {
@@ -292,6 +311,20 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case "up", "k":
+			if m.Mode == "input" {
+				if keyMsg.String() == "k" {
+					break
+				}
+				if len(m.searchHistory) > 0 && m.searchHistoryIndex < len(m.searchHistory)-1 {
+					if m.searchHistoryIndex == -1 {
+						m.searchHistoryDraft = m.TextInput.Value()
+					}
+					m.searchHistoryIndex++
+					m.TextInput.SetValue(m.searchHistory[m.searchHistoryIndex])
+					m.TextInput.CursorEnd()
+				}
+				return m, nil
+			}
 			m.Cursor--
 			if m.Mode == "trending" {
 				if m.Cursor < 0 {
@@ -466,15 +499,19 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			if m.Mode == "input" {
+				searchTerm := m.TextInput.Value()
 				selectedItem := m.Choice.choice
 				switch selectedItem {
 				case "movies":
+					history.AddSearch("movies", searchTerm)
 					resultList := update.InputUpdateMsgVods(m.TextInput)
 					VodModel(m, resultList)
 				case "series":
+					history.AddSearch("series", searchTerm)
 					resultList := update.InputUpdateMsgSeries(m.TextInput)
 					SeriesModel(m, resultList)
 				case "anime":
+					history.AddSearch("anime", searchTerm)
 					resultList := update.InputUpdateMsgAnime(m.TextInput)
 					AnimeModel(m, resultList)
 				}
