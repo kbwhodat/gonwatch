@@ -5,6 +5,7 @@ type Choices struct {
 }
 
 var ChoiceList = []Choices{
+	{choice: "recently watched"},
 	{choice: "trending"},
 	{choice: "movies"},
 	{choice: "series"},

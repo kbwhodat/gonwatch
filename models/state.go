@@ -1,8 +1,8 @@
 package models
 
 import (
-	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/list"
+	"github.com/charmbracelet/bubbles/textinput"
 )
 
 type ModelStateSnapshot struct {
@@ -11,7 +11,7 @@ type ModelStateSnapshot struct {
 	Mode           string
 }
 
-func (m *Model) restorePreviousState() (*Model) {
+func (m *Model) restorePreviousState() *Model {
 	if len(m.PreviousStates) == 0 {
 		return m
 	}
@@ -20,10 +20,13 @@ func (m *Model) restorePreviousState() (*Model) {
 	prevState := m.PreviousStates[lastIndex]
 	m.PreviousStates = m.PreviousStates[:lastIndex]
 
-	// Restore the model state
 	m.TextInput = prevState.TextInputState
 	m.List = prevState.ListState
 	m.Mode = prevState.Mode
+
+	if m.width > 0 && m.height > 0 {
+		m.List.SetSize(m.width-2, m.height-2)
+	}
 
 	return m
 }

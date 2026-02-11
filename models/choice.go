@@ -6,6 +6,7 @@ import (
 )
 
 var choiceList = []Choices{
+	{choice: "recently watched"},
 	{choice: "trending"},
 	{choice: "movies"},
 	{choice: "series"},
@@ -15,9 +16,9 @@ var choiceList = []Choices{
 
 func ChoiceModel() *Model {
 	var (
-		titleStyle        = lipgloss.NewStyle().MarginLeft(2)
-		paginationStyle   = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
-		helpStyle         = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1)
+		titleStyle      = lipgloss.NewStyle().MarginLeft(2)
+		paginationStyle = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
+		helpStyle       = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1)
 	)
 
 	listItems := make([]list.Item, len(choiceList))

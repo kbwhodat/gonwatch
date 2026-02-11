@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"sync"
 	"time"
 )
 
 type WatchedItem struct {
-	Type       string    `json:"type"`                // "episode", "anime_episode", "movie"
+	Type       string    `json:"type"` // "episode", "anime_episode", "movie"
 	TmdbID     int64     `json:"tmdb_id"`
 	SeasonNum  int       `json:"season_num"`
 	SeasonID   string    `json:"season_id,omitempty"`
@@ -206,4 +207,34 @@ func IsAnimeEpisodeWatchedBySeasonID(tmdbID int64, seasonID string, episodeNum i
 		}
 	}
 	return false
+}
+
+func GetRecentlyWatched(limit int) []WatchedItem {
+	h, err := Load()
+	if err != nil {
+		return []WatchedItem{}
+	}
+
+	cacheMu.RLock()
+	defer cacheMu.RUnlock()
+
+	if len(h.Items) == 0 {
+		return []WatchedItem{}
+	}
+
+	// Create a copy to avoid modifying the original
+	items := make([]WatchedItem, len(h.Items))
+	copy(items, h.Items)
+
+	// Sort by WatchedAt descending (most recent first)
+	sort.Slice(items, func(i, j int) bool {
+		return items[i].WatchedAt.After(items[j].WatchedAt)
+	})
+
+	// Return up to limit items
+	if limit > 0 && len(items) > limit {
+		return items[:limit]
+	}
+
+	return items
 }

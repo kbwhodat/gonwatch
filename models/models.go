@@ -43,15 +43,19 @@ type Model struct {
 	loading      bool
 	loadingLabel string
 
-	playingItem     ListItem
-	playingTmdbID   int64
-	playingSeason   int
-	playingSeasonID string
+	playingItem        ListItem
+	playingTmdbID      int64
+	playingSeason      int
+	playingSeasonID    string
+	playingSeriesTitle string
 
 	sourcesTried  []string
 	currentSource int
 	totalSources  int
 	streamUrl     string
+
+	width  int
+	height int
 }
 
 type ListItem interface {
@@ -179,6 +183,12 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.width = msg.Width
+		m.height = msg.Height
+		m.List.SetSize(msg.Width-2, msg.Height-2)
+		return m, nil
+
 	case playbackRetryMsg:
 		m.sourcesTried = msg.sourcesTried
 		m.totalSources = msg.totalSources
@@ -216,12 +226,16 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.playingItem != nil {
 				switch m.playingItem.Type() {
 				case "episode":
+					title := m.List.SelectedItem().FilterValue()
+					if m.playingSeriesTitle != "" {
+						title = m.playingSeriesTitle + " - " + title
+					}
 					history.MarkWatched(
 						"episode",
 						m.playingItem.TmdbID(),
 						m.playingItem.SznNumber(),
 						m.playingItem.ID(),
-						m.List.SelectedItem().FilterValue(),
+						title,
 					)
 				case "anime episodes":
 					episodeNum, _ := strconv.ParseInt(m.playingItem.EpString(), 10, 64)
@@ -331,6 +345,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						}
 
 					case "series":
+						m.playingSeriesTitle = m.List.SelectedItem().FilterValue()
 						seasonList := search.GetSeasons(selectedItem.ID())
 						SeasonModel(m, seasonList)
 
@@ -386,6 +401,65 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							m.spinner.Tick,
 							fetchMovieCmd(selectedItem, nil),
 						)
+
+					case "recently_watched_episode":
+						recentItem, ok := m.List.SelectedItem().(BubbleTeaRecentlyWatchedList)
+						watchedEpisodeNum := int64(0)
+						if ok {
+							watchedEpisodeNum = recentItem.EpisodeNum
+						}
+						seasonList := search.GetSeasons(selectedItem.TmdbID())
+						SeasonModel(m, seasonList)
+						m.saveCurrentState()
+						episodeList := search.GetEpisodes(selectedItem.TmdbID(), selectedItem.SznNumber())
+						EpisodeModel(m, episodeList)
+						for i, ep := range episodeList {
+							if ep.EpisodeId == watchedEpisodeNum {
+								m.List.Select(i)
+								break
+							}
+						}
+
+					case "recently_watched_anime_episode":
+						recentItem, ok := m.List.SelectedItem().(BubbleTeaRecentlyWatchedList)
+						if ok {
+							parts := strings.Split(recentItem.ItemTitle, "|")
+							animeName := recentItem.ItemTitle
+							seasonID := recentItem.SeasonID
+							watchedEpisodeNum := recentItem.EpisodeNum
+							if len(parts) > 1 {
+								animeName = parts[1]
+							}
+							seasonList := search.GetAnimeSeasons(selectedItem.TmdbID(), animeName)
+							AnimeSeasonModel(m, seasonList)
+							m.saveCurrentState()
+							for _, season := range seasonList {
+								if season.SeasonID == seasonID {
+									filterValue := seasonID + "|" + animeName
+									episodeList := search.GetAnimeEpisodeList(season.Episodes, filterValue)
+									AnimeEpisodesModel(m, episodeList, selectedItem.TmdbID(), seasonID)
+									for i, ep := range episodeList {
+										epNum, _ := strconv.ParseInt(ep.EpisodeId, 10, 64)
+										if epNum == watchedEpisodeNum {
+											m.List.Select(i)
+											break
+										}
+									}
+									break
+								}
+							}
+						}
+
+					case "recently_watched_movie":
+						m.loading = true
+						m.loadingLabel = "Fetching content..."
+						m.Mode = "loading"
+						m.playingItem = selectedItem
+						m.sourcesTried = nil
+						return m, tea.Batch(
+							m.spinner.Tick,
+							fetchMovieCmd(selectedItem, nil),
+						)
 					}
 				}
 				return m, nil
@@ -429,6 +503,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 				} else if m.Choice.FilterValue() == "trending" {
 					TrendingModel(m)
+
+				} else if m.Choice.FilterValue() == "recently watched" {
+					RecentlyWatchedModel(m)
 
 				} else {
 					InputModel(m)
