@@ -1,5 +1,6 @@
 
 import asyncio
+from difflib import SequenceMatcher
 import re
 import tempfile
 import os
@@ -65,8 +66,11 @@ class AnimePahe:
                 }
             )
 
+        def similar(a, b):
+            return SequenceMatcher(None, a.lower(), b.lower()).ratio()
+
         for i in results:
-            if i.get("title") == unquote(query):
+            if similar(i.get("title"), unquote(query)) > 0.7:
                 return i.get("session")
 
     async def get_episodes(self, anime_session: str):
