@@ -243,6 +243,7 @@ async def main() -> str:
                 url = await get_video_url(args.title, args.episode)
                 if url and len(url) > 0:
                     urls.append(url)
+
             result = json.dumps({"urls": urls, "subtitles": subtitles, "source_used": source_used, "total_sources": len(SOURCES_ANIME)})
             return result
 

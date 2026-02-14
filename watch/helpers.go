@@ -75,7 +75,7 @@ func executePythonTask(content string, id int64, season_number int64, episode_nu
 		anime_title,
 		"--skip-sources", skipArg,
 	}
-	// log.Println(cmdArgs)
+	log.Println(cmdArgs)
 
 	pythonPath, err := resolvePythonPath()
 	if err != nil {
@@ -137,6 +137,8 @@ func resolvePythonPath() (string, error) {
 }
 
 func openMpv(urls []string, subtitles []string) error {
+	log.Println(urls)
+
 	if len(urls) == 0 {
 		return fmt.Errorf("no URLs to play")
 	}
@@ -190,8 +192,7 @@ func openMpv(urls []string, subtitles []string) error {
 
 		} else if strings.Contains(host, "embedsports.top") || strings.Contains(host, "poocloud.in") || strings.Contains(host, "vdcast.live") {
 
-			cmdArgs = []string{"--retry-open", "5", "--retry-streams", "5", "--stream-segment-attempts", "5", "--stream-segment-timeout", "10", "--player-continuous-http",
-				"--http-no-ssl-verify", "--http-header", "Referer=https://embedsports.top/", host, "best", "-p", mpv, "-a", "--network-timeout=60 --stream-lavf-o=reconnect=1,reconnect_streamed=1,reconnect_delay_max=5 --fullscreen"}
+			cmdArgs = []string{"--retry-open","5","--retry-streams","5","--stream-segment-attempts","5","--stream-segment-timeout","10","--hls-live-restart","--player-continuous-http","--http-header","Referer=https://embedsports.top/","--http-header","Origin=https://embedsports.top","--http-header","User-Agent=Mozilla/5.0",host,"best","-p", mpv,"-a","--cache=yes","-a","--cache-secs=120","-a","--demuxer-readahead-secs=120","-a","--demuxer-max-bytes=500M","-a","--demuxer-max-back-bytes=100M","-a","--network-timeout=60","-a","--stream-lavf-o=reconnect=1,reconnect_streamed=1,reconnect_delay_max=5","-a","--fullscreen"}
 
 		} else if strings.Contains(host, "storm") {
 			cmdArgs = []string{"--cache", "--cache-secs=5", "--demuxer-readahead-secs=5", "--vo=gpu", "--scale=ewa_lanczos", "--cscale=ewa_lanczos", "--correct-downscaling=yes", "--dither-depth=auto", "--deband=no", "--hls-bitrate=max", "--demuxer-lavf-o=fflags=+genpts", "--no-audio-pitch-correction", "--video-sync=audio", "--stream-lavf-o=reconnect=1", "--stream-lavf-o=reconnect_streamed=1", "--stream-lavf-o=reconnect_delay_max=5", "--stream-lavf-o=reconnect_on_http_error=1", "--stream-lavf-o=reconnect_on_network_error=1", "--fullscreen", "--save-position-on-quit", "--slang=en,eng", "--http-header-fields=Referer: https://vidlink.pro/", "--ytdl-raw-options=impersonate=Chrome-131:Android-14,add-header=Referer:https://vidlink.pro/", host}
