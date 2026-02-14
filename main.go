@@ -17,14 +17,11 @@ func main() {
 		return
 	}
 
-	// Initialize debug mode if requested
-	if len(os.Args) > 1 && os.Args[1] == "debug" {
-		f, err := tea.LogToFile("/tmp/debug.log", "debug")
-		if err != nil {
-			log.Printf("Failed to initialize debug logging: %v", err)
-		} else {
-			defer f.Close()
-		}
+	f, err := tea.LogToFile("/tmp/debug.log", "debug")
+	if err != nil {
+		log.Printf("Failed to initialize debug logging: %v", err)
+	} else {
+		defer f.Close()
 	}
 
 	// Start the TUI application

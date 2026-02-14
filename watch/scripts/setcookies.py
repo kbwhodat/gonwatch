@@ -95,6 +95,9 @@ async def main() -> str:
     chrome_options.add_argument("--headless=new")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--mute-audio")
+    chrome_options.add_argument("--block-new-web-contents")
+    chrome_options.add_argument("--disable-popup-blocking")
+    chrome_options.add_argument("--disable-notifications")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-features=DisableLoadExtensionCommandLineSwitch")
     chrome_options.add_experimental_option(
@@ -123,6 +126,23 @@ async def main() -> str:
     skip_list = [s.strip() for s in args.skip_sources.split(",") if s.strip()]
     async with webdriver.Chrome(options=chrome_options) as driver:
         await driver.execute_cdp_cmd("Network.enable", {})
+
+        # this should help me block annoying popups
+        await driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
+            "source": """
+                window.open = function() {
+                    return null;
+                };
+
+                document.addEventListener('click', function(e) {
+                    const target = e.target.closest('a');
+                    if (target && target.getAttribute('target') === '_blank') {
+                        e.preventDefault();
+                    }
+                }, true);
+            """
+        })
+
         urls = []
         subtitles = []
         langs = []
@@ -235,16 +255,12 @@ async def main() -> str:
             else:
                 url_bytes = bytes([104, 116, 116, 112, 115, 58, 47, 47, 112, 108, 97, 121, 101, 114, 46, 118, 105, 100, 101, 97, 115, 121, 46, 110, 101, 116, 47, 109, 111, 118, 105, 101, 47])
                 await driver.get(url_bytes.decode() + f"{args.id}", wait_load=True)
-            await driver.sleep(4.5)
 
             try:
-                overlay = await driver.find_elements(By.CSS_SELECTOR, "button svg.play-icon-main", timeout=3)
-                if overlay:
-                    btn = await overlay[0].find_element(By.XPATH, "./ancestor::button")
-                    await btn.click()
-                play_btn = await driver.find_element(By.ID, "ButtonPlay", timeout=5)
-                await play_btn.click()
-            except Exception:
+                play_button = await driver.find_element(By.TAG_NAME, 'button', timeout=10)
+                await play_button.click(move_to=True)
+                await driver.sleep(4)
+            except:
                 pass
 
             await driver.remove_cdp_listener("Network.responseReceived", on_response)
