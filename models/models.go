@@ -222,9 +222,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case linkFetchedMsg:
 		m.loading = false
-		m.sourcesTried = nil
-		m.currentSource = 0
-		m.totalSources = 0
+		m.sourcesTried = msg.sourcesTried
+		m.currentSource = len(msg.sourcesTried)
+		m.totalSources = msg.totalSources
 
 		if msg.found {
 			if m.playingItem != nil {
@@ -282,6 +282,26 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "left":
 			m := m.restorePreviousState()
 			return m, nil
+
+		case "s":
+			if m.Mode == "fullscreen" && m.playingItem != nil && len(m.sourcesTried) < m.totalSources {
+				m.Altscreen = false
+				m.loading = true
+				m.Mode = "loading"
+				m.currentSource = len(m.sourcesTried) + 1
+				m.loadingLabel = fmt.Sprintf("Trying source %d of %d...", m.currentSource, m.totalSources)
+
+				var fetchCmd tea.Cmd
+				switch m.playingItem.Type() {
+				case "episode", "anime episodes":
+					fetchCmd = fetchEpisodeCmd(m.playingItem, m, m.sourcesTried)
+				case "vods":
+					fetchCmd = fetchMovieCmd(m.playingItem, m.sourcesTried)
+				case "streams":
+					fetchCmd = fetchStreamCmd(m.streamUrl, m.sourcesTried)
+				}
+				return m, tea.Batch(tea.ExitAltScreen, m.spinner.Tick, fetchCmd)
+			}
 
 		case "down", "j":
 			if m.Mode == "input" {
@@ -584,12 +604,12 @@ func (m Model) View() string {
 		if len(filteredValue) > 1 {
 			return view.FullscreenView(
 				keywordStyle.Render(filteredValue[1]),
-				helpStyle.Render("\n\n\nleft/h: go back • q: exit/quit\n"),
+				helpStyle.Render("\n\n\nleft/h: go back • s: skip source • q: exit/quit\n"),
 			)
 		} else {
 			return view.FullscreenView(
 				keywordStyle.Render(m.List.SelectedItem().FilterValue()),
-				helpStyle.Render("\n\n\nleft/h: go back • q: exit/quit\n"),
+				helpStyle.Render("\n\n\nleft/h: go back • s: skip source • q: exit/quit\n"),
 			)
 		}
 
