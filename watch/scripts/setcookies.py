@@ -153,6 +153,7 @@ async def main() -> str:
                 url = event.get("response").get("url")
                 m3u8 = re.compile(".*m3u8")
                 vtt = re.compile(".*vtt")
+
                 if url not in urls:
                     if "test.vidify.top" in url:
                         urls.append(url)
@@ -186,9 +187,54 @@ async def main() -> str:
 
         if args.content == "stream":
             if "stream" not in skip_list:
+                await driver.execute_cdp_cmd("Target.setAutoAttach", {
+                    "autoAttach": True,
+                    "waitForDebuggerOnStart": False,
+                    "flatten": True
+                })
                 await driver.add_cdp_listener("Network.responseReceived", on_response)
                 await driver.get(args.stream_url, wait_load=True)
                 await driver.sleep(4)
+
+                if len(urls) == 0:
+                    iframe = await driver.find_element(By.TAG_NAME, "iframe")
+                    if iframe:
+                        iframe_src = await iframe.get_attribute("src")
+
+                        if "pooembed.eu" in iframe_src:
+                            referrer = "https://embedsports.top/"
+                        else:
+                            referrer = "https://embedhd.org/"
+
+                        await driver.execute_cdp_cmd("Network.setExtraHTTPHeaders", {
+                            "headers": {
+                                "Referer": referrer
+                            }
+                        })
+                        await driver.get(iframe_src, wait_load=True)
+                        await driver.sleep(3)
+
+                        try:
+                            iframe = await driver.find_element(By.TAG_NAME, "iframe")
+
+                            if iframe:
+                                iframe_src2 = await iframe.get_attribute("src")
+
+                                if "exposestrat.com" in iframe_src2:
+                                    response = requests.get(iframe_src2, headers={
+                                        "Referer": "https://embedhd.org/",
+                                        "User-Agent": USER_AGENT,
+                                        "Accept-Encoding": "gzip, deflate"
+                                    })
+                                    match = re.search(r'return\s*\(\s*\[(.*?)\]\.join\(\s*["\']', response.text)
+                                    if match:
+                                        chars = re.findall(r'"([^"]*)"', match.group(1))
+                                        m3u8_url = ''.join(chars).replace('\\/', '/')
+                                        if '.m3u8' in m3u8_url:
+                                            urls.append(m3u8_url)
+                        except:
+                            pass
+
                 await driver.remove_cdp_listener("Network.responseReceived", on_response)
                 source_used = "stream"
             result = json.dumps({"urls": urls, "subtitles": subtitles, "source_used": source_used, "total_sources": len(SOURCES_STREAM)})
