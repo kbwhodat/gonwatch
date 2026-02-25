@@ -267,12 +267,15 @@ async def main() -> str:
                     episodes = await pahe.get_episodes(anime_session)
                     episode_num = int(args.episode)
                     target_episode = episodes[episode_num - 1] if 0 <= (episode_num - 1) < len(episodes) else None
-                    if target_episode:
-                        episode_session = target_episode["session"]
-                        sources = await pahe.get_sources(anime_session, episode_session)
-                        if sources:
-                            m3u8_url = await pahe.resolve_kwik_with_node(sources[0]["url"])
-                            urls.append(m3u8_url)
+                    try:
+                        if target_episode:
+                            episode_session = target_episode["session"]
+                            sources = await pahe.get_sources(anime_session, episode_session)
+                            if sources:
+                                m3u8_url = await pahe.resolve_kwik_with_node(sources[0]["url"])
+                                urls.append(m3u8_url)
+                    except:
+                        pass
 
             if len(urls) == 0 and "heavenscape" not in skip_list:
                 source_used = "heavenscape"
