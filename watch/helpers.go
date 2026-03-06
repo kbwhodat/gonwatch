@@ -184,7 +184,14 @@ func openMpv(urls []string, subtitles []string) error {
 			cmdArgs = []string{"--cache", "--cache-secs=5", "--demuxer-readahead-secs=5", "--vo=gpu", "--scale=ewa_lanczos", "--cscale=ewa_lanczos", "--correct-downscaling=yes", "--dither-depth=auto", "--deband=no", "--hls-bitrate=max", "--demuxer-lavf-o=fflags=+genpts", "--no-audio-pitch-correction", "--video-sync=audio", "--stream-lavf-o=reconnect=1", "--stream-lavf-o=reconnect_streamed=1", "--stream-lavf-o=reconnect_delay_max=5", "--stream-lavf-o=reconnect_on_http_error=1", "--stream-lavf-o=reconnect_on_network_error=1", "--fullscreen", "--save-position-on-quit", "--slang=en,eng", "--http-header-fields=Referer: https://vidsrc.cc/", host}
 
 		} else if strings.Contains(host, "strmd.top") {
-			err := openMpvWithCurlImpersonate(host)
+			err := openMpvWithCurlImpersonate(host, "https://embedsports.top/")
+			if err != nil {
+				return fmt.Errorf("unable to play stream: %w", err)
+			}
+			return nil
+
+		} else if strings.Contains(host, "modifiles.fans") {
+			err := openMpvWithCurlImpersonate(host, "https://pooembed.eu/")
 			if err != nil {
 				return fmt.Errorf("unable to play stream: %w", err)
 			}
@@ -192,13 +199,13 @@ func openMpv(urls []string, subtitles []string) error {
 
 		} else if strings.Contains(host, "embedsports.top") || strings.Contains(host, "poocloud.in") || strings.Contains(host, "vdcast.live") {
 
-			cmdArgs = []string{"--retry-open","5","--retry-streams","5","--stream-segment-attempts","5","--stream-segment-timeout","10","--player-continuous-http","--http-header","Referer=https://embedsports.top/","--http-header","Origin=https://embedsports.top","--http-header","User-Agent=Mozilla/5.0",host,"best","-p",mpv,"-a","--cache=yes","-a","--cache-secs=20","-a","--demuxer-readahead-secs=5","-a","--demuxer-max-bytes=150M","-a","--demuxer-max-back-bytes=50M","-a","--network-timeout=15","-a","--stream-lavf-o=reconnect=1,reconnect_streamed=1,reconnect_delay_max=5","-a","--fullscreen"}
+			cmdArgs = []string{"--retry-open", "5", "--retry-streams", "5", "--stream-segment-attempts", "5", "--stream-segment-timeout", "10", "--player-continuous-http", "--http-header", "Referer=https://embedsports.top/", "--http-header", "Origin=https://embedsports.top", "--http-header", "User-Agent=Mozilla/5.0", host, "best", "-p", mpv, "-a", "--cache=yes", "-a", "--cache-secs=20", "-a", "--demuxer-readahead-secs=5", "-a", "--demuxer-max-bytes=150M", "-a", "--demuxer-max-back-bytes=50M", "-a", "--network-timeout=15", "-a", "--stream-lavf-o=reconnect=1,reconnect_streamed=1,reconnect_delay_max=5", "-a", "--fullscreen"}
 
-		} else if strings.Contains(host, "modifiles.fans") {
-			cmdArgs = []string{"--retry-open","5","--retry-streams","5","--stream-segment-attempts","5","--stream-segment-timeout","10","--player-continuous-http","--http-header","Referer=https://pooembed.eu/","--http-header","Origin=https://pooembed.eu/","--http-header","User-Agent=Mozilla/5.0",host,"best","-p",mpv,"-a","--cache=yes","-a","--cache-secs=20","-a","--demuxer-readahead-secs=5","-a","--demuxer-max-bytes=150M","-a","--demuxer-max-back-bytes=50M","-a","--network-timeout=15","-a","--stream-lavf-o=reconnect=1,reconnect_streamed=1,reconnect_delay_max=5","-a","--fullscreen"}
+			// } else if strings.Contains(host, "modifiles.fans") {
+			// 	cmdArgs = []string{"--retry-open","5","--retry-streams","5","--stream-segment-attempts","5","--stream-segment-timeout","10","--player-continuous-http","--http-header","Referer=https://pooembed.eu/","--http-header","Origin=https://pooembed.eu/","--http-header","User-Agent=Mozilla/5.0",host,"best","-p",mpv,"-a","--cache=yes","-a","--cache-secs=20","-a","--demuxer-readahead-secs=5","-a","--demuxer-max-bytes=150M","-a","--demuxer-max-back-bytes=50M","-a","--network-timeout=15","-a","--stream-lavf-o=reconnect=1,reconnect_streamed=1,reconnect_delay_max=5","-a","--fullscreen"}
 
 		} else if strings.Contains(host, "sanwalyaarpya.com") {
-			cmdArgs = []string{"--retry-open","5","--retry-streams","5","--stream-segment-attempts","5","--stream-segment-timeout","10","--player-continuous-http","--http-header","Referer=https://exposestrat.com/","--http-header","Origin=https://exposestrat.com/","--http-header","User-Agent=Mozilla/5.0",host,"best","-p",mpv,"-a","--cache=yes","-a","--cache-secs=20","-a","--demuxer-readahead-secs=5","-a","--demuxer-max-bytes=150M","-a","--demuxer-max-back-bytes=50M","-a","--network-timeout=15","-a","--stream-lavf-o=reconnect=1,reconnect_streamed=1,reconnect_delay_max=5","-a","--fullscreen"}
+			cmdArgs = []string{"--retry-open", "5", "--retry-streams", "5", "--stream-segment-attempts", "5", "--stream-segment-timeout", "10", "--player-continuous-http", "--http-header", "Referer=https://exposestrat.com/", "--http-header", "Origin=https://exposestrat.com/", "--http-header", "User-Agent=Mozilla/5.0", host, "best", "-p", mpv, "-a", "--cache=yes", "-a", "--cache-secs=20", "-a", "--demuxer-readahead-secs=5", "-a", "--demuxer-max-bytes=150M", "-a", "--demuxer-max-back-bytes=50M", "-a", "--network-timeout=15", "-a", "--stream-lavf-o=reconnect=1,reconnect_streamed=1,reconnect_delay_max=5", "-a", "--fullscreen"}
 
 		} else if strings.Contains(host, "storm") {
 			cmdArgs = []string{"--cache", "--cache-secs=5", "--demuxer-readahead-secs=5", "--vo=gpu", "--scale=ewa_lanczos", "--cscale=ewa_lanczos", "--correct-downscaling=yes", "--dither-depth=auto", "--deband=no", "--hls-bitrate=max", "--demuxer-lavf-o=fflags=+genpts", "--no-audio-pitch-correction", "--video-sync=audio", "--stream-lavf-o=reconnect=1", "--stream-lavf-o=reconnect_streamed=1", "--stream-lavf-o=reconnect_delay_max=5", "--stream-lavf-o=reconnect_on_http_error=1", "--stream-lavf-o=reconnect_on_network_error=1", "--fullscreen", "--save-position-on-quit", "--slang=en,eng", "--http-header-fields=Referer: https://vidlink.pro/", "--ytdl-raw-options=impersonate=Chrome-131:Android-14,add-header=Referer:https://vidlink.pro/", host}
@@ -212,7 +219,7 @@ func openMpv(urls []string, subtitles []string) error {
 		}
 
 		var newCmd *exec.Cmd
-		if strings.Contains(host, "embedsports.top") || strings.Contains(host, "strmd.top") || strings.Contains(host, "poocloud.in") || strings.Contains(host, "modifiles.fans") || strings.Contains(host, "sanwalyaarpya.com") {
+		if strings.Contains(host, "embedsports.top") || strings.Contains(host, "strmd.top") || strings.Contains(host, "poocloud.in") || strings.Contains(host, "sanwalyaarpya.com") {
 			newCmd = exec.Command(streamlink, cmdArgs...)
 			log.Println(newCmd)
 		} else {
@@ -255,7 +262,7 @@ func openMpv(urls []string, subtitles []string) error {
 	return fmt.Errorf("all URLs failed to play")
 }
 
-func openMpvWithCurlImpersonate(m3u8URL string) error {
+func openMpvWithCurlImpersonate(m3u8URL string, referer string) error {
 	tmpDir, err := os.MkdirTemp("", "gonwatch-stream-*")
 	if err != nil {
 		return fmt.Errorf("failed to create temp directory: %w", err)
@@ -272,7 +279,7 @@ func openMpvWithCurlImpersonate(m3u8URL string) error {
 		return fmt.Errorf("mpv not found: %w", err)
 	}
 
-	bashCmd := exec.Command("bash", scriptPath, m3u8URL)
+	bashCmd := exec.Command("bash", scriptPath, m3u8URL, referer)
 	mpvCmd := exec.Command(mpv,
 		"--no-cache",
 		"--demuxer-max-bytes=50M",
