@@ -37,6 +37,10 @@ func GetAnimeSeasons(tmdbid int64, query string) []common.SeasonsTypeList {
 	apiURL := string([]byte{104, 116, 116, 112, 115, 58, 47, 47, 104, 101, 97, 118, 101, 110, 115, 99, 97, 112, 101, 46, 118, 101, 114, 99, 101, 108, 46, 97, 112, 112, 47, 97, 112, 105, 47, 97, 110, 105, 109, 101, 47, 115, 101, 97, 114, 99, 104, 47})
 	url := apiURL + url.QueryEscape(query)
 
+	// log.Println(url)
+	url = strings.Replace(url, "%27s", "", 1)
+	// log.Println(url)
+
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		log.Fatal(err)
@@ -67,7 +71,8 @@ func GetAnimeSeasons(tmdbid int64, query string) []common.SeasonsTypeList {
 			lengthOfString := len(query)
 			re := regexp.MustCompile(`[^a-z0-9 ]+`)
 			englishName := re.ReplaceAllString(strings.ToLower(query), " ")
-			if lengthOfString <= len(englishName) {
+
+			if len(englishName) <= len(item.EnglishName) {
 				if strings.EqualFold(item.EnglishName[0:lengthOfString], englishName) || strings.EqualFold(item.EnglishName[0:lengthOfString], strings.ToLower(query)) {
 					s.SeriesID = tmdbid
 					// s.EpisodeCount      = item.EpisodeCount
