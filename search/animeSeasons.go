@@ -73,7 +73,8 @@ func GetAnimeSeasons(tmdbid int64, query string) []common.SeasonsTypeList {
 			englishName := re.ReplaceAllString(strings.ToLower(query), " ")
 
 			if len(englishName) <= len(item.EnglishName) {
-				if strings.EqualFold(item.EnglishName[0:lengthOfString], englishName) || strings.EqualFold(item.EnglishName[0:lengthOfString], strings.ToLower(query)) {
+				strings.Contains(item.EnglishName, englishName)
+				if strings.EqualFold(item.EnglishName[0:lengthOfString], englishName) || strings.EqualFold(item.EnglishName[0:lengthOfString], strings.ToLower(query)) || strings.Contains(item.EnglishName, query) {
 					s.SeriesID = tmdbid
 					// s.EpisodeCount      = item.EpisodeCount
 					s.SeasonTitle = item.EnglishName
