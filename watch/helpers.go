@@ -171,7 +171,7 @@ func openMpv(urls []string, subtitles []string) error {
 		} else if strings.Contains(host, "tools.fast4speed.rsvp") {
 			cmdArgs = []string{"--cache", "--cache-secs=5", "--demuxer-readahead-secs=5", "--profile=gpu-hq", "--vo=gpu", "--scale=ewa_lanczossharp", "--cscale=ewa_lanczossharp", "--correct-downscaling=yes", "--sigmoid-upscaling=yes", "--dither-depth=auto", "--deband=yes", "--deband-iterations=2", "--deband-threshold=35", "--deband-range=16", "--deband-grain=5", "--hls-bitrate=max", "--demuxer-lavf-o=fflags=+genpts", "--no-audio-pitch-correction", "--video-sync=audio", "--stream-lavf-o=reconnect=1", "--stream-lavf-o=reconnect_streamed=1", "--stream-lavf-o=reconnect_delay_max=5", "--stream-lavf-o=reconnect_on_http_error=1", "--stream-lavf-o=reconnect_on_network_error=1", "--fullscreen", "--save-position-on-quit", "--slang=en,eng", "--http-header-fields=Referer: https://allmanga.to/", host}
 
-		} else if strings.Contains(host, "paradise") || strings.Contains(host, "workers") {
+		} else if strings.Contains(host, "paradise") || strings.Contains(host, "workers") || strings.Contains(host, "worldthunder") {
 			cmdArgs = []string{"--cache", "--cache-secs=5", "--demuxer-readahead-secs=5", "--vo=gpu", "--scale=ewa_lanczos", "--cscale=ewa_lanczos", "--correct-downscaling=yes", "--dither-depth=auto", "--deband=no", "--hls-bitrate=max", "--demuxer-lavf-o=fflags=+genpts", "--no-audio-pitch-correction", "--video-sync=audio", "--stream-lavf-o=reconnect=1", "--stream-lavf-o=reconnect_streamed=1", "--stream-lavf-o=reconnect_delay_max=5", "--stream-lavf-o=reconnect_on_http_error=1", "--stream-lavf-o=reconnect_on_network_error=1", "--fullscreen", "--save-position-on-quit", "--slang=en,eng", "--http-header-fields=Referer: https://player.videasy.net/", host}
 
 		} else if strings.Contains(host, "owocdn.top") || strings.Contains(host, "uwucdn.top") {
@@ -333,9 +333,9 @@ func GetSubtitles(tmdbid int, content string, season int, episode int) []string 
 	subtitleList := []string{}
 	var subtitle_url string
 	if content == "tv" {
-		subtitle_url = string([]byte{104, 116, 116, 112, 115, 58, 47, 47, 115, 117, 98, 46, 119, 121, 122, 105, 101, 46, 114, 117, 47, 115, 101, 97, 114, 99, 104, 63, 105, 100, 61}) + strconv.Itoa(tmdbid) + string([]byte{38, 115, 101, 97, 115, 111, 110, 61}) + strconv.Itoa(season) + string([]byte{38, 101, 112, 105, 115, 111, 100, 101, 61}) + strconv.Itoa(episode) + string([]byte{38, 102, 111, 114, 109, 97, 116, 61, 115, 114, 116})
+		subtitle_url = string([]byte{104, 116, 116, 112, 115, 58, 47, 47, 115, 117, 98, 46, 119, 121, 122, 105, 101, 46, 114, 117, 47, 115, 101, 97, 114, 99, 104, 63, 105, 100, 61}) + strconv.Itoa(tmdbid) + string([]byte{38, 115, 101, 97, 115, 111, 110, 61}) + strconv.Itoa(season) + string([]byte{38, 101, 112, 105, 115, 111, 100, 101, 61}) + strconv.Itoa(episode) + string([]byte{38, 102, 111, 114, 109, 97, 116, 61, 115, 114, 116}) + string([]byte{38, 107, 101, 121, 61, 119, 121, 122, 105, 101, 45, 54, 102, 97, 101, 51, 102, 54, 56, 100, 56, 98, 100, 97, 53, 48, 54, 52, 52, 99, 101, 49, 55, 55, 53, 48, 55, 50, 51, 52, 56, 97, 51})
 	} else {
-		subtitle_url = string([]byte{104, 116, 116, 112, 115, 58, 47, 47, 115, 117, 98, 46, 119, 121, 122, 105, 101, 46, 114, 117, 47, 115, 101, 97, 114, 99, 104, 63, 105, 100, 61}) + strconv.Itoa(tmdbid) + string([]byte{38, 102, 111, 114, 109, 97, 116, 61, 115, 114, 116})
+		subtitle_url = string([]byte{104, 116, 116, 112, 115, 58, 47, 47, 115, 117, 98, 46, 119, 121, 122, 105, 101, 46, 114, 117, 47, 115, 101, 97, 114, 99, 104, 63, 105, 100, 61}) + strconv.Itoa(tmdbid) + string([]byte{38, 102, 111, 114, 109, 97, 116, 61, 115, 114, 116}) + string([]byte{38, 107, 101, 121, 61, 119, 121, 122, 105, 101, 45, 54, 102, 97, 101, 51, 102, 54, 56, 100, 56, 98, 100, 97, 53, 48, 54, 52, 52, 99, 101, 49, 55, 55, 53, 48, 55, 50, 51, 52, 56, 97, 51})
 	}
 
 	req, _ := http.NewRequest("GET", subtitle_url, nil)
