@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -365,5 +366,245 @@ func GetSubtitles(tmdbid int, content string, season int, episode int) []string 
 		}
 	}
 
+	// If no English subs found, try translating the best available language
+	if len(subtitleList) == 0 && len(subtitles) > 0 {
+		log.Println("No English subtitles found, attempting translation fallback...")
+		translatedPath, err := getTranslatedSubtitle(subtitles)
+		if err != nil {
+			log.Printf("Subtitle translation fallback failed: %v", err)
+		} else if translatedPath != "" {
+			log.Printf("Using translated subtitles: %s", translatedPath)
+			subtitleList = append(subtitleList, translatedPath)
+		}
+	}
+
 	return subtitleList
+}
+
+// Language priority for translation to English, ordered by typical translation quality
+var translationLangPriority = []string{"es", "ea", "pt", "pb", "de", "fr", "nl", "pl", "tr", "hr", "fi", "sl", "ar"}
+
+// getTranslatedSubtitle picks the best available non-English subtitle, downloads it,
+// translates it to English, and writes it to a temp file.
+func getTranslatedSubtitle(subtitles SubtitlesResponse) (string, error) {
+	subURL, lang := pickBestSubtitle(subtitles)
+	if subURL == "" {
+		return "", fmt.Errorf("no suitable subtitle language found for translation")
+	}
+
+	log.Printf("Downloading %s subtitle for translation...", lang)
+	srtContent, err := downloadSRT(subURL)
+	if err != nil {
+		return "", err
+	}
+
+	log.Printf("Translating from %s to English...", lang)
+	translated, err := translateSRT(srtContent, lang)
+	if err != nil {
+		return "", err
+	}
+
+	// Write to temp file
+	tmpFile, err := os.CreateTemp("", "gonwatch-translated-*.srt")
+	if err != nil {
+		return "", fmt.Errorf("failed to create temp file: %w", err)
+	}
+
+	if _, err := tmpFile.WriteString(translated); err != nil {
+		tmpFile.Close()
+		return "", fmt.Errorf("failed to write translated subtitle: %w", err)
+	}
+	tmpFile.Close()
+
+	return tmpFile.Name(), nil
+}
+
+// pickBestSubtitle selects the best non-English subtitle based on language priority.
+func pickBestSubtitle(subtitles SubtitlesResponse) (string, string) {
+	available := make(map[string]string)
+	for _, item := range subtitles {
+		if item.Language == "en" {
+			continue
+		}
+		if _, exists := available[item.Language]; !exists {
+			available[item.Language] = item.Url
+		}
+	}
+
+	for _, lang := range translationLangPriority {
+		if subURL, ok := available[lang]; ok {
+			return subURL, lang
+		}
+	}
+
+	// If no priority language found, use whatever is first
+	for _, item := range subtitles {
+		if item.Language != "en" {
+			return item.Url, item.Language
+		}
+	}
+
+	return "", ""
+}
+
+// downloadSRT fetches the SRT content from a URL.
+func downloadSRT(srtURL string) (string, error) {
+	client := http.Client{Timeout: 30 * time.Second}
+	resp, err := client.Get(srtURL)
+	if err != nil {
+		return "", fmt.Errorf("failed to download SRT: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read SRT body: %w", err)
+	}
+
+	return string(body), nil
+}
+
+// translateSRT parses an SRT file, translates the text lines, and returns the translated SRT.
+func translateSRT(srtContent, fromLang string) (string, error) {
+	blocks := strings.Split(strings.ReplaceAll(strings.TrimSpace(srtContent), "\r\n", "\n"), "\n\n")
+
+	type srtBlock struct {
+		seqNum    string
+		timestamp string
+		text      string
+	}
+
+	var parsed []srtBlock
+	var textParts []string
+
+	for _, block := range blocks {
+		lines := strings.Split(strings.TrimSpace(block), "\n")
+		if len(lines) < 3 {
+			continue
+		}
+		parsed = append(parsed, srtBlock{
+			seqNum:    lines[0],
+			timestamp: lines[1],
+			text:      strings.Join(lines[2:], "\n"),
+		})
+		// Replace newlines within subtitle text with a space for translation
+		textParts = append(textParts, strings.ReplaceAll(strings.Join(lines[2:], " "), "\n", " "))
+	}
+
+	if len(parsed) == 0 {
+		return "", fmt.Errorf("no valid SRT blocks found")
+	}
+
+	// Batch translate using ||| as separator, in chunks of ~4500 chars
+	separator := " ||| "
+	maxChunkSize := 4500
+	var translatedParts []string
+
+	currentChunk := ""
+	for i, text := range textParts {
+		addition := text
+		if currentChunk != "" {
+			addition = separator + text
+		}
+
+		if len(currentChunk)+len(addition) > maxChunkSize && currentChunk != "" {
+			translated, err := googleTranslate(currentChunk, fromLang)
+			if err != nil {
+				return "", fmt.Errorf("translation failed: %w", err)
+			}
+			parts := strings.Split(translated, "|||")
+			for _, p := range parts {
+				translatedParts = append(translatedParts, strings.TrimSpace(p))
+			}
+			currentChunk = text
+		} else {
+			if currentChunk == "" {
+				currentChunk = text
+			} else {
+				currentChunk += separator + text
+			}
+		}
+
+		if i == len(textParts)-1 && currentChunk != "" {
+			translated, err := googleTranslate(currentChunk, fromLang)
+			if err != nil {
+				return "", fmt.Errorf("translation failed: %w", err)
+			}
+			parts := strings.Split(translated, "|||")
+			for _, p := range parts {
+				translatedParts = append(translatedParts, strings.TrimSpace(p))
+			}
+		}
+	}
+
+	// Reconstruct SRT
+	var result strings.Builder
+	for i, block := range parsed {
+		text := block.text
+		if i < len(translatedParts) && translatedParts[i] != "" {
+			text = translatedParts[i]
+		}
+		result.WriteString(block.seqNum + "\n" + block.timestamp + "\n" + text + "\n\n")
+	}
+
+	return result.String(), nil
+}
+
+// googleTranslate sends text to Google Translate and returns the English translation.
+func googleTranslate(text, fromLang string) (string, error) {
+	if text == "" {
+		return "", nil
+	}
+
+	baseURL := "https://translate.googleapis.com/translate_a/single"
+	params := url.Values{}
+	params.Set("client", "gtx")
+	params.Set("sl", fromLang)
+	params.Set("tl", "en")
+	params.Set("dt", "t")
+	params.Set("ie", "UTF-8")
+	params.Set("q", text)
+
+	fullURL := baseURL + "?" + params.Encode()
+
+	client := http.Client{Timeout: 30 * time.Second}
+	resp, err := client.Get(fullURL)
+	if err != nil {
+		return "", fmt.Errorf("translation request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("translation returned status %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read translation response: %w", err)
+	}
+
+	// Response is nested JSON: [[["translated text","original text",...],...],...,]
+	var result []interface{}
+	if err := json.Unmarshal(body, &result); err != nil {
+		return "", fmt.Errorf("failed to parse translation response: %w", err)
+	}
+
+	translated := ""
+	if len(result) > 0 {
+		if sentences, ok := result[0].([]interface{}); ok {
+			for _, sentence := range sentences {
+				if parts, ok := sentence.([]interface{}); ok && len(parts) > 0 {
+					if t, ok := parts[0].(string); ok {
+						translated += t
+					}
+				}
+			}
+		}
+	}
+
+	if translated == "" {
+		return "", fmt.Errorf("empty translation result")
+	}
+
+	return translated, nil
 }
